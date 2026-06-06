@@ -5,6 +5,7 @@ from connection.Settings import Settings as Connection
 from logger.Logger import Logger
 from network.Protocol import Protocol
 from network.Registry import Registry
+from room.Registry import Registry as RoomRegistry
 
 
 class Handler:
@@ -16,11 +17,13 @@ class Handler:
         peer: socket.socket,
         address: tuple[str, int],
         registry: Registry,
+        rooms: RoomRegistry,
         running: Callable[[], bool],
     ) -> None:
         self.peer = peer
         self.address = address
         self.registry = registry
+        self.rooms = rooms
         self.running = running
         self.logger = Logger.Get("Handler")
         self.buffer = ""
@@ -126,12 +129,29 @@ class Handler:
             self.Reply(Protocol.Registered(False, error=reason))
             return
 
-        self.Reply(Protocol.Registered(True, role=role))
+        room_payload = None
 
         if role == "dm":
-            self._LogActivity(
-                f"Dungeon Master connected from {self.address[0]}:{self.address[1]}",
+            visibility, password, capacity = Protocol.ParseRoomSettings(message.get("room"))
+            dm_address = f"{self.address[0]}:{self.address[1]}"
+            room = self.rooms.Create(
+                host_peer=self.peer,
+                dm_address=dm_address,
+                visibility=visibility,
+                password=password,
+                capacity=capacity,
             )
+            entry = self.registry.Find(self.peer)
+
+            if entry is not None:
+                entry.room_id = room.id
+
+            room_payload = room.ToDict()
+            self._LogActivity(
+                f"Room {room.id} created by Dungeon Master from {dm_address}",
+            )
+
+        self.Reply(Protocol.Registered(True, role=role, room=room_payload))
 
     # Writes to the dashboard activity feed when the panel is active.
     def _LogActivity(self, message: str) -> None:
@@ -156,6 +176,11 @@ class Handler:
 
     # Removes the client from the registry and closes its socket.
     def Disconnect(self) -> None:
+        entry = self.registry.Find(self.peer)
+
+        if entry is not None and entry.room_id:
+            self.rooms.Remove(entry.room_id)
+
         self.registry.Remove(self.peer)
         self.peer.close()
         self.logger.info(

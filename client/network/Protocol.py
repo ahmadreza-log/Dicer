@@ -5,14 +5,21 @@ class Protocol:
     ValidRoles = {"dm", "adventure", "watch"}
 
     Labels = {
+        "guest": "Guest",
         "dm": "Dungeon Master",
-        "adventure": "Adventurer",
+        "adventure": "Player",
         "watch": "Spectator",
     }
 
+    DefaultRole = "guest"
+
     @classmethod
-    def Register(cls, role: str) -> bytes:
-        payload = {"type": "register", "role": role}
+    def Register(cls, role: str, room: dict | None = None) -> bytes:
+        payload: dict = {"type": "register", "role": role}
+
+        if room:
+            payload["room"] = room
+
         return json.dumps(payload, separators=(",", ":")).encode("utf-8") + b"\n"
 
     @classmethod

@@ -5,6 +5,7 @@ import time
 from logger.Logger import Logger
 from network.Handler import Handler
 from network.Registry import Registry
+from room.Registry import Registry as RoomRegistry
 from security.Guard import Guard
 
 
@@ -16,6 +17,7 @@ class Server:
         self.host = host
         self.port = port
         self.registry = Registry()
+        self.rooms = RoomRegistry()
         self.running = False
         self.listener: socket.socket | None = None
         self.thread: threading.Thread | None = None
@@ -93,6 +95,7 @@ class Server:
                 peer=peer,
                 address=address,
                 registry=self.registry,
+                rooms=self.rooms,
                 running=self.IsRunning,
             )
 

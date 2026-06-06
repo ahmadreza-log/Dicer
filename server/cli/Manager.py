@@ -106,11 +106,28 @@ class Manager:
         return [
             {
                 "address": entry.address,
-                "role": entry.role or "",
+                "role": entry.role,
                 "role_label": entry.RoleLabel(entry.role),
                 "registered": entry.registered,
+                "room_id": entry.room_id or "",
             }
             for entry in entries
+        ]
+
+    # Returns active game rooms for the CLI panel and dashboard.
+    def Rooms(self) -> list[dict]:
+        if not self.IsActive():
+            return []
+
+        return [
+            {
+                "id": room.id,
+                "dm": room.dm_address,
+                "visibility": room.visibility,
+                "capacity": room.capacity,
+                "has_password": bool(room.password),
+            }
+            for room in self.server.rooms.List()
         ]
 
     # Stops the server when the CLI panel exits.

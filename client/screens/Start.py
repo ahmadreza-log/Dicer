@@ -74,10 +74,22 @@ class Start(ctk.CTkFrame):
         success, message = Session.Register(role)
 
         if success:
+            details = (
+                f"You are registered as {message}.\n"
+                "The socket stays open until you close the client."
+            )
+
+            room = Session.room
+
+            if room:
+                details += (
+                    f"\n\nRoom ID: {room['id']}\n"
+                    "Share this ID so players can join your session."
+                )
+
             self.navigator.ShowNotice(
                 "Connected",
-                f"You are registered as {message}.\n"
-                "Your connection is visible in the server management panel.",
+                details,
                 success=True,
             )
             return
