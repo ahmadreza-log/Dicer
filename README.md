@@ -135,7 +135,7 @@ Opens the **MainMenu** screen — the base for client actions (connect, settings
 ### 🧪 Test a Connection
 
 ```bash
-python -c "import socket; p=socket.create_connection(('127.0.0.1',5555)); print(p.recv(1024).decode()); p.close()"
+python -c "import socket; p=socket.create_connection(('127.0.0.1',12055)); print(p.recv(1024).decode()); p.close()"
 ```
 
 Expected output:
@@ -150,16 +150,17 @@ Connected to Dicer server
 
 | Flag           | Default      | Description                              |
 |----------------|--------------|------------------------------------------|
-| `--host`       | `127.0.0.1`  | Address the server binds to            |
-| `--port`       | `5555`       | TCP port to listen on                    |
+| `--host`       | `127.0.0.1`  | Address the server binds to (headless) |
 | `--level`      | `INFO`       | Log level (`DEBUG` … `CRITICAL`)         |
 | `--headless`   | off          | Start TCP server only (no panel)         |
 | `--dash`       | off          | Start Plotly Dash web dashboard          |
 | `--dash-host`  | `127.0.0.1`  | Dash bind address                        |
 | `--dash-port`  | `8050`       | Dash HTTP port                           |
 
+TCP game port is fixed at **12055** and cannot be changed.
+
 ```bash
-python main.py --host 127.0.0.1 --port 5555 --level DEBUG
+python main.py --level DEBUG
 ```
 
 ---
