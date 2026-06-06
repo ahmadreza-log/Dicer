@@ -12,6 +12,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### ✨ Added
+- 📊 Dash sidebar panel — full settings forms, storage overview boxes, activity feed
+- 🖥️ CustomTkinter client shell with `MainMenu` screen (`client/`)
+- 📦 `customtkinter` dependency for client GUI
 - 📈 Plotly Dash 4.x web dashboard (`server/board/`) — live status, server controls, client chart, MySQL panel
 - 🗄️ MySQL database layer with pluggable `database/Engine.py` facade and `mysql/Driver.py`
 - ⚙️ Database settings submenu — enable, host, port, user, password, test, connect/disconnect
@@ -19,6 +22,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - ⌨️ CLI flags `--dash`, `--dash-host`, `--dash-port`
 
 ### 🔧 Changed
+- 💾 Dash settings now persist and apply at runtime (auto-save, panel refresh in seconds)
+- 🔄 TCP server auto-restarts when network, connection, or database settings require it
 - 🗄️ Fix database menu — lazy MySQL import, direct toggle, test works without enabling first
 - 🖥️ Fix Message/Detail screens — wait for input so connect/test feedback is visible
 - 🖥️ Interactive management CLI panel added (`cli/Menu.py`, `cli/Panel.py`, `cli/Manager.py`) — auto-starts server on launch
@@ -27,7 +32,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - 🔒 IP allow/block list enforcement on incoming connections
 
 ### 🚧 Planned
-- Client application (`client/`)
+- Client TCP connection and chat features
 - User-to-user messaging through the central server
 - Authentication and session management
 

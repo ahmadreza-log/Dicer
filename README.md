@@ -20,7 +20,7 @@ A peer-to-peer networking platform where users connect through a **central TCP s
 | Component | Folder    | Status         | Description                              |
 |-----------|-----------|----------------|------------------------------------------|
 | 🖥️ Server | `server/` | ✅ In progress | Central TCP hub — accepts client connections |
-| 📱 Client | `client/` | 🚧 Planned     | User application that connects to the server |
+| 📱 Client | `client/` | 🚧 In progress | CustomTkinter GUI — MainMenu screen |
 
 ---
 
@@ -123,6 +123,15 @@ python main.py --dash --dash-host 127.0.0.1 --dash-port 8050
 
 Built with [Plotly Dash 4.x](https://dash.plotly.com) and `dash-bootstrap-components` (CYBORG theme).
 
+### 📱 Run the Client (CustomTkinter)
+
+```bash
+cd client
+python main.py
+```
+
+Opens the **MainMenu** screen — the base for client actions (connect, settings, etc.).
+
 ### 🧪 Test a Connection
 
 ```bash
@@ -190,7 +199,12 @@ Dicer/
 │       ├── Console.py       # 🖥️ Terminal output
 │       ├── Level.py         # 📶 Level parsing
 │       └── Settings.py      # ⚙️ Log config
-├── client/                  # 🚧 Coming soon
+├── client/
+│   ├── main.py              # 🚀 Client entry point
+│   ├── App.py               # 🪟 Main window
+│   ├── Theme.py             # 🎨 CustomTkinter theme
+│   └── screens/
+│       └── MainMenu.py      # 🏠 Main menu screen
 ├── requirements.txt         # 📦 Python dependencies
 ├── README.md
 ├── CHANGELOG.md
@@ -244,7 +258,8 @@ Example line:
 - [x] Structured logging system
 - [x] MySQL database layer (pluggable drivers)
 - [x] Plotly Dash 4.x web dashboard (`python main.py --dash`)
-- [ ] Client application (`client/`)
+- [ ] Client TCP connection and messaging
+- [x] CustomTkinter client shell with MainMenu (`client/main.py`)
 - [ ] User registration and discovery
 - [ ] Message relay between clients
 - [ ] Production deployment (public IP / hosting)
