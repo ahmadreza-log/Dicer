@@ -4,7 +4,6 @@ from cli.Manager import Manager
 from cli.screens.Message import Message
 from cli.screens.Prompt import Prompt
 from cli.screens.Submenu import Submenu
-from cli.settings.Input import Input
 from cli.settings.Summary import Summary
 
 
@@ -12,7 +11,7 @@ class Database:
     # Database settings submenu for MySQL configuration.
 
     Options = [
-        ("1", "🗄️  Enable Database"),
+        ("1", "🗄️  Toggle Database"),
         ("2", "🌐  Change Host"),
         ("3", "🔌  Change Port"),
         ("4", "👤  Change User"),
@@ -61,7 +60,7 @@ class Database:
 
     @classmethod
     def ToggleEnabled(cls, manager: Manager) -> None:
-        Settings.Enabled = Input.Toggle("Database", Settings.Enabled)
+        Settings.Enabled = not Settings.Enabled
 
         if Settings.Enabled:
             success, message = Engine.Connect()

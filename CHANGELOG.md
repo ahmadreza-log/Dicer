@@ -17,7 +17,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - 📦 `requirements.txt` with `mysql-connector-python`
 
 ### 🔧 Changed
-- 📊 Logging system temporarily disabled (`logger/Settings.py` → `Enabled = False`) pending further development
+- 🗄️ Fix database menu — lazy MySQL import, direct toggle, test works without enabling first
 - 🖥️ Interactive management CLI panel added (`cli/Menu.py`, `cli/Panel.py`, `cli/Manager.py`) — auto-starts server on launch
 - ⚙️ Full Settings hub with Network, Logging, Connection, Security, and Save/Load/Reset submenus
 - 💾 Settings persistence via `config/stored.json`

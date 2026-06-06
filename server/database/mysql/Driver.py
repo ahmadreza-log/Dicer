@@ -1,6 +1,3 @@
-import mysql.connector
-from mysql.connector import Error
-
 from database.Base import Base
 from database.Settings import Settings
 
@@ -11,10 +8,29 @@ class Driver(Base):
     def __init__(self) -> None:
         self.link = None
 
+    # Loads the MySQL connector or returns a clear install message.
+    @staticmethod
+    def LoadConnector():
+        try:
+            import mysql.connector
+            from mysql.connector import Error
+
+            return mysql.connector, Error
+        except ImportError:
+            return None, None
+
     # Opens a connection to the configured MySQL server.
     def Connect(self) -> tuple[bool, str]:
+        connector, error_type = self.LoadConnector()
+
+        if connector is None:
+            return False, (
+                "mysql-connector-python is not installed. "
+                "Run: pip install -r requirements.txt"
+            )
+
         try:
-            self.link = mysql.connector.connect(
+            self.link = connector.connect(
                 host=Settings.Host,
                 port=Settings.Port,
                 user=Settings.User,
@@ -24,7 +40,7 @@ class Driver(Base):
             return True, (
                 f"Connected to MySQL at {Settings.Host}:{Settings.Port}/{Settings.Name}"
             )
-        except Error as error:
+        except error_type as error:
             self.link = None
             return False, f"MySQL connection failed. Reason: {error}"
 
@@ -35,14 +51,43 @@ class Driver(Base):
 
         self.link = None
 
-    # Connects briefly to verify credentials and database availability.
+    # Verifies server access and whether the configured database exists.
     def Test(self) -> tuple[bool, str]:
-        success, message = self.Connect()
+        connector, error_type = self.LoadConnector()
 
-        if success:
-            self.Disconnect()
+        if connector is None:
+            return False, (
+                "mysql-connector-python is not installed. "
+                "Run: pip install -r requirements.txt"
+            )
 
-        return success, message
+        try:
+            link = connector.connect(
+                host=Settings.Host,
+                port=Settings.Port,
+                user=Settings.User,
+                password=Settings.Password,
+            )
+            cursor = link.cursor()
+            cursor.execute(
+                "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = %s",
+                (Settings.Name,),
+            )
+            exists = cursor.fetchone() is not None
+            cursor.close()
+            link.close()
+
+            if not exists:
+                return False, (
+                    f"Server reachable but database '{Settings.Name}' does not exist. "
+                    f"Create it in MySQL first."
+                )
+
+            return True, (
+                f"MySQL OK at {Settings.Host}:{Settings.Port}/{Settings.Name}"
+            )
+        except error_type as error:
+            return False, f"MySQL test failed. Reason: {error}"
 
     # Returns whether a live MySQL connection is currently open.
     def IsActive(self) -> bool:

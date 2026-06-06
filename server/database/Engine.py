@@ -1,6 +1,5 @@
 from database.Base import Base
 from database.Settings import Settings
-from database.mysql.Driver import Driver as MysqlDriver
 
 
 class Engine:
@@ -13,9 +12,13 @@ class Engine:
     @classmethod
     def Create(cls) -> Base:
         if Settings.Type == "MySQL":
-            return MysqlDriver()
+            from database.mysql.Driver import Driver
 
-        return MysqlDriver()
+            return Driver()
+
+        from database.mysql.Driver import Driver
+
+        return Driver()
 
     # Connects to the database when enabled in settings.
     @classmethod
@@ -35,12 +38,9 @@ class Engine:
 
         cls.driver = None
 
-    # Tests the connection without keeping it open.
+    # Tests the connection without keeping it open (works even when disabled).
     @classmethod
     def Test(cls) -> tuple[bool, str]:
-        if not Settings.Enabled:
-            return False, "Enable the database in settings before testing."
-
         tester = cls.Create()
         return tester.Test()
 
@@ -56,7 +56,7 @@ class Engine:
         cls.Disconnect()
 
         if not Settings.Enabled:
-            return True, "Database disabled."
+            return True, "Settings updated."
 
         if was_active:
             return cls.Connect()

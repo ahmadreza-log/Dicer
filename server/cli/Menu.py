@@ -45,7 +45,9 @@ class Menu:
                 cls.Handle(manager, choice)
         finally:
             manager.Cleanup()
-            Engine.Disconnect()
+
+            if Database.Enabled or Engine.IsActive():
+                Engine.Disconnect()
 
     # Reads the user menu choice from the main screen.
     @classmethod
