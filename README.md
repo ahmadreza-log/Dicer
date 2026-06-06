@@ -27,6 +27,7 @@ A peer-to-peer networking platform where users connect through a **central TCP s
 ## ✨ Features (Server)
 
 - 🔌 **TCP socket server** — multi-client, threaded connections
+- 🗄️ **MySQL database layer** — pluggable engine with CLI settings (disabled by default)
 - 📊 **Detailed logging** — console + rotating file logs
 - ⚙️ **CLI configuration** — host, port, and log level
 - 🛑 **Graceful shutdown** — clean exit on Ctrl+C
@@ -39,7 +40,8 @@ A peer-to-peer networking platform where users connect through a **central TCP s
 ### 📋 Requirements
 
 - Python **3.10+**
-- No external dependencies (stdlib only)
+- **MySQL** 8.x (optional, when database is enabled)
+- Dependencies listed in `requirements.txt`
 
 ### 📦 Setup
 
@@ -54,6 +56,8 @@ venv\Scripts\activate
 
 # Linux / macOS
 source venv/bin/activate
+
+pip install -r requirements.txt
 ```
 
 ### ▶️ Run the Server
@@ -84,8 +88,9 @@ After each action, a **message box** (Screen 2) or **detail screen** (Screen 3) 
 | `2` | 📊 **Logging** — Enable, Level, Console/File, Directory, Rotation |
 | `3` | 🔗 **Connection** — Welcome Message, Buffer, Idle Timeout, Max/IP |
 | `4` | 🔒 **Security** — Password, Allowed IPs, Blocked IPs |
-| `5` | 💾 **Save / Load / Reset** — persists to `config/stored.json` |
-| `6` | 📋 **View All Settings** — full overview on Screen 3 |
+| `5` | 🗄️ **Database** — MySQL host, port, user, password, test connection |
+| `6` | 💾 **Save / Load / Reset** — persists to `config/stored.json` |
+| `7` | 📋 **View All Settings** — full overview on Screen 3 |
 
 For direct server start without the panel:
 
@@ -137,6 +142,12 @@ Dicer/
 │   │   └── Registry.py      # 📋 Active connections
 │   ├── hooks/
 │   │   └── Shutdown.py      # 🛑 Signal handling
+│   ├── database/
+│   │   ├── Engine.py        # 🗄️ Database facade
+│   │   ├── Base.py          # 🔌 Driver interface
+│   │   ├── Settings.py      # ⚙️ DB config
+│   │   └── mysql/
+│   │       └── Driver.py    # 🐬 MySQL driver
 │   └── logger/
 │       ├── Logger.py        # 📊 Logging facade
 │       ├── Format.py        # 📝 Log format
@@ -145,12 +156,29 @@ Dicer/
 │       ├── Level.py         # 📶 Level parsing
 │       └── Settings.py      # ⚙️ Log config
 ├── client/                  # 🚧 Coming soon
+├── requirements.txt         # 📦 Python dependencies
 ├── README.md
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
 ├── SECURITY.md
 └── LICENSE
 ```
+
+---
+
+## 🗄️ Database (MySQL)
+
+> ⏸️ **Disabled by default** — enable from **Settings → Database** in the management panel.
+
+| Setting   | Default       | Description              |
+|-----------|---------------|--------------------------|
+| Type      | `MySQL`       | Engine type (extensible) |
+| Host      | `127.0.0.1`   | MySQL server address     |
+| Port      | `3306`        | MySQL port               |
+| User      | `root`        | MySQL username           |
+| Name      | `dicer`       | Database schema name     |
+
+The `database/Engine.py` facade uses a driver pattern — MySQL now, stronger databases later.
 
 ---
 
@@ -179,6 +207,7 @@ Example line:
 - [x] Central TCP server with socket connections
 - [x] Multi-client threading
 - [x] Structured logging system
+- [x] MySQL database layer (pluggable drivers)
 - [ ] Client application (`client/`)
 - [ ] User registration and discovery
 - [ ] Message relay between clients

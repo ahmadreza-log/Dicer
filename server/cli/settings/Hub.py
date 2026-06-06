@@ -3,6 +3,7 @@ from cli.screens.Detail import Detail
 from cli.screens.Message import Message
 from cli.screens.Submenu import Submenu
 from cli.settings.Connection import Connection as ConnectionMenu
+from cli.settings.Database import Database as DatabaseMenu
 from cli.settings.Logging import Logging
 from cli.settings.Network import Network as NetworkMenu
 from cli.settings.Persist import Persist
@@ -18,8 +19,9 @@ class Hub:
         ("2", "📊  Logging Settings"),
         ("3", "🔗  Connection Settings"),
         ("4", "🔒  Security Settings"),
-        ("5", "💾  Save / Load / Reset"),
-        ("6", "📋  View All Settings"),
+        ("5", "🗄️  Database Settings"),
+        ("6", "💾  Save / Load / Reset"),
+        ("7", "📋  View All Settings"),
     ]
 
     @classmethod
@@ -36,8 +38,9 @@ class Hub:
                 "2": lambda: Logging.Run(manager),
                 "3": lambda: ConnectionMenu.Run(manager),
                 "4": lambda: Security.Run(manager),
-                "5": lambda: Persist.Run(manager),
-                "6": lambda: cls.ViewAll(manager),
+                "5": lambda: DatabaseMenu.Run(manager),
+                "6": lambda: Persist.Run(manager),
+                "7": lambda: cls.ViewAll(manager),
             }
 
             action = actions.get(choice)

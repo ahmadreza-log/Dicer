@@ -2,6 +2,8 @@ from config.Settings import ResolveHost
 from config.Settings import Settings as NetworkSettings
 from config.Store import Store
 from connection.Settings import Settings as ConnectionSettings
+from database.Engine import Engine
+from database.Settings import Settings as DatabaseSettings
 from logger.Settings import Settings as LoggerSettings
 from security.Settings import Settings as SecuritySettings
 from cli.Manager import Manager
@@ -76,6 +78,23 @@ class Summary:
         ])
 
     @classmethod
+    def Database(cls) -> list[str]:
+        state = "Connected" if Engine.IsActive() else "Disconnected"
+
+        if not DatabaseSettings.Enabled:
+            state = "Disabled"
+
+        return cls.Lines([
+            ("Type:", DatabaseSettings.Type),
+            ("Enabled:", cls.FormatBool(DatabaseSettings.Enabled)),
+            ("Host:", DatabaseSettings.Host),
+            ("Port:", str(DatabaseSettings.Port)),
+            ("User:", DatabaseSettings.User),
+            ("Name:", DatabaseSettings.Name),
+            ("Status:", state),
+        ])
+
+    @classmethod
     def Persist(cls) -> list[str]:
         exists = "Yes" if Store.Path().exists() else "No"
 
@@ -97,6 +116,8 @@ class Summary:
             ("Level:", LoggerSettings.Level),
             ("Welcome:", cls.Clip(ConnectionSettings.Welcome, 22)),
             ("Security:", "Password" if SecuritySettings.Password else "Open"),
+            ("Database:", "On" if DatabaseSettings.Enabled else "Off"),
+            ("DB Status:", "Up" if Engine.IsActive() else "Down"),
             ("Store:", "Saved" if Store.Path().exists() else "Not saved"),
             ("Server:", f"{state} | {status['clients']} clients"),
         ])
@@ -131,6 +152,14 @@ class Summary:
             ("Password:", "Set" if SecuritySettings.Password else "None"),
             ("Allowed:", SecuritySettings.Allowed or "All"),
             ("Blocked:", SecuritySettings.Blocked or "None"),
+            ("── Database ──", ""),
+            ("Type:", DatabaseSettings.Type),
+            ("Enabled:", cls.FormatBool(DatabaseSettings.Enabled)),
+            ("Host:", DatabaseSettings.Host),
+            ("Port:", str(DatabaseSettings.Port)),
+            ("User:", DatabaseSettings.User),
+            ("Name:", DatabaseSettings.Name),
+            ("Connected:", cls.FormatBool(Engine.IsActive())),
             ("── Storage ──", ""),
             ("File:", Store.Filename),
             ("Saved:", cls.FormatBool(Store.Path().exists())),

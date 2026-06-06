@@ -1,5 +1,6 @@
 from config.Settings import Settings as Network
 from connection.Settings import Settings as Connection
+from database.Settings import Settings as Database
 from logger.Settings import Settings as Logger
 from security.Settings import Settings as Security
 
@@ -36,6 +37,15 @@ class Bundle:
             "Allowed": "",
             "Blocked": "",
         },
+        "database": {
+            "Enabled": False,
+            "Type": "MySQL",
+            "Host": "127.0.0.1",
+            "Port": 3306,
+            "User": "root",
+            "Password": "",
+            "Name": "dicer",
+        },
     }
 
     # Captures all current settings as a dictionary.
@@ -69,6 +79,15 @@ class Bundle:
                 "Password": Security.Password,
                 "Allowed": Security.Allowed,
                 "Blocked": Security.Blocked,
+            },
+            "database": {
+                "Enabled": Database.Enabled,
+                "Type": Database.Type,
+                "Host": Database.Host,
+                "Port": Database.Port,
+                "User": Database.User,
+                "Password": Database.Password,
+                "Name": Database.Name,
             },
         }
 
@@ -104,6 +123,15 @@ class Bundle:
         Security.Password = security.get("Password", Security.Password)
         Security.Allowed = security.get("Allowed", Security.Allowed)
         Security.Blocked = security.get("Blocked", Security.Blocked)
+
+        database = data.get("database", {})
+        Database.Enabled = bool(database.get("Enabled", Database.Enabled))
+        Database.Type = database.get("Type", Database.Type)
+        Database.Host = database.get("Host", Database.Host)
+        Database.Port = int(database.get("Port", Database.Port))
+        Database.User = database.get("User", Database.User)
+        Database.Password = database.get("Password", Database.Password)
+        Database.Name = database.get("Name", Database.Name)
 
     # Restores every setting to its factory default value.
     @staticmethod

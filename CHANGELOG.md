@@ -11,6 +11,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### ✨ Added
+- 🗄️ MySQL database layer with pluggable `database/Engine.py` facade and `mysql/Driver.py`
+- ⚙️ Database settings submenu — enable, host, port, user, password, test, connect/disconnect
+- 📦 `requirements.txt` with `mysql-connector-python`
+
 ### 🔧 Changed
 - 📊 Logging system temporarily disabled (`logger/Settings.py` → `Enabled = False`) pending further development
 - 🖥️ Interactive management CLI panel added (`cli/Menu.py`, `cli/Panel.py`, `cli/Manager.py`) — auto-starts server on launch

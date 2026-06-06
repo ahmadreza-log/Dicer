@@ -1,5 +1,7 @@
 from config.Settings import Settings as Network
 from config.Store import Store
+from database.Engine import Engine
+from database.Settings import Settings as Database
 from cli.Manager import Manager
 from cli.Panel import Panel
 from cli.screens.Detail import Detail
@@ -25,6 +27,12 @@ class Menu:
             if not success:
                 Message.Render(text=message, kind="error", title="Startup Failed")
 
+        if Database.Enabled:
+            success, message = Engine.Connect()
+
+            if not success:
+                Message.Render(text=message, kind="error", title="Database Failed")
+
         try:
             while True:
                 Main.Render(manager)
@@ -37,6 +45,7 @@ class Menu:
                 cls.Handle(manager, choice)
         finally:
             manager.Cleanup()
+            Engine.Disconnect()
 
     # Reads the user menu choice from the main screen.
     @classmethod

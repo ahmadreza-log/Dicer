@@ -1,4 +1,5 @@
 from config.Store import Store
+from database.Engine import Engine
 from cli.Manager import Manager
 from cli.screens.Message import Message
 from cli.screens.Submenu import Submenu
@@ -56,6 +57,9 @@ class Persist:
         kind = "success" if success else "error"
         Message.Render(text=message, kind=kind)
 
+        if success:
+            Engine.Reload()
+
     @classmethod
     def Reset(cls, manager: Manager) -> None:
         if manager.IsActive():
@@ -68,3 +72,6 @@ class Persist:
         success, message = Store.Reset()
         kind = "success" if success else "error"
         Message.Render(text=message, kind=kind)
+
+        if success:
+            Engine.Disconnect()

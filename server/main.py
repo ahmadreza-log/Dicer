@@ -4,6 +4,8 @@ from cli.Terminal import Terminal
 from config.Settings import ResolveHost
 from config.Settings import Settings as Network
 from config.Store import Store
+from database.Engine import Engine
+from database.Settings import Settings as Database
 from hooks.Shutdown import Shutdown
 from logger.Logger import Logger
 from network.Server import Server
@@ -33,10 +35,16 @@ def RunHeadless(arguments, logger) -> None:
         arguments.level,
     )
 
+    if Database.Enabled:
+        success, message = Engine.Connect()
+        logger.info("Database connect | success=%s | message=%s", success, message)
+
     server = Server(host=host, port=port)
 
     Shutdown.Register(server)
     server.Start()
+
+    Engine.Disconnect()
 
 
 def RunPanel(logger) -> None:
