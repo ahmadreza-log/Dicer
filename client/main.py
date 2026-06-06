@@ -1,5 +1,9 @@
+from App import App
+
+
 def Main() -> None:
-    pass
+    application = App()
+    application.Run()
 
 
 if __name__ == "__main__":

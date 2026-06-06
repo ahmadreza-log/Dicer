@@ -2,3 +2,4 @@ mysql-connector-python>=9.0.0
 dash>=4.2.0
 plotly>=6.0.0
 dash-bootstrap-components>=2.0.0
+customtkinter>=5.2.0
