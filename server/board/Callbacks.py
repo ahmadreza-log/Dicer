@@ -10,6 +10,7 @@ from board.Settings import Settings as Panel
 from board.Shell import Shell
 from cli.Panel import Panel as CliPanel
 from database.Settings import Settings as Database
+from network.Entry import Entry
 
 
 class Callbacks:
@@ -567,8 +568,8 @@ class Callbacks:
 
     @classmethod
     def BuildRoleBadge(cls, client: dict):
-        role = client.get("role", "")
-        label = client.get("role_label", "Pending")
+        role = client.get("role", Entry.DefaultRole)
+        label = client.get("role_label", Entry.Labels[Entry.DefaultRole])
 
         if role == "dm":
             return dbc.Badge(label, color="warning", className="text-dark")
@@ -578,6 +579,9 @@ class Callbacks:
 
         if role == "watch":
             return dbc.Badge(label, color="secondary")
+
+        if role == "guest":
+            return dbc.Badge(label, color="light", className="text-dark")
 
         return dbc.Badge(label, color="light", className="text-dark")
 
