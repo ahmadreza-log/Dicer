@@ -1,0 +1,51 @@
+from cli.Arguments import Arguments
+from cli.Menu import Menu
+from cli.Terminal import Terminal
+from config.Settings import ResolveHost
+from config.Settings import Settings as Network
+from config.Store import Store
+from hooks.Shutdown import Shutdown
+from logger.Logger import Logger
+from network.Server import Server
+
+
+def Main() -> None:
+    arguments = Arguments.Parse()
+    Store.Load()
+    Logger.Initialize(level=arguments.level)
+
+    logger = Logger.Get("Main")
+
+    if arguments.headless:
+        RunHeadless(arguments, logger)
+    else:
+        RunPanel(logger)
+
+
+def RunHeadless(arguments, logger) -> None:
+    host = arguments.host if arguments.host else ResolveHost()
+    port = arguments.port if arguments.port else Network.Port
+
+    logger.info(
+        "Starting Dicer server | host=%s | port=%d | level=%s",
+        host,
+        port,
+        arguments.level,
+    )
+
+    server = Server(host=host, port=port)
+
+    Shutdown.Register(server)
+    server.Start()
+
+
+def RunPanel(logger) -> None:
+    Terminal.Configure()
+
+    logger.info("Opening management panel")
+
+    Menu.Run()
+
+
+if __name__ == "__main__":
+    Main()
