@@ -97,13 +97,21 @@ class Manager:
             "clients": clients,
         }
 
-    # Returns a list of connected client address strings.
-    def Clients(self) -> list[str]:
+    # Returns connected client details for the CLI panel and dashboard.
+    def Clients(self) -> list[dict]:
         if not self.IsActive():
             return []
 
         entries = self.server.registry.List()
-        return [f"{entry.host}:{entry.port}" for entry in entries]
+        return [
+            {
+                "address": entry.address,
+                "role": entry.role or "",
+                "role_label": entry.RoleLabel(entry.role),
+                "registered": entry.registered,
+            }
+            for entry in entries
+        ]
 
     # Stops the server when the CLI panel exits.
     def Cleanup(self) -> None:

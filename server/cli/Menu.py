@@ -126,9 +126,13 @@ class Menu:
             return
 
         clients = manager.Clients()
+        items = [
+            f"{client['address']}  [{client['role_label']}]"
+            for client in clients
+        ]
         Detail.RenderList(
             title="Connected Clients",
-            items=clients,
+            items=items,
             empty="No clients connected.",
         )
 

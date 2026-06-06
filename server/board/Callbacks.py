@@ -156,7 +156,6 @@ class Callbacks:
         @application.callback(
             Output("set-net-mode", "value"),
             Output("set-net-host", "value"),
-            Output("set-net-port", "value"),
             Output("set-net-max", "value"),
             Output("set-net-auto", "value"),
             Input("page", "data"),
@@ -169,7 +168,6 @@ class Callbacks:
             return (
                 values["mode"],
                 values["host"],
-                values["port"],
                 values["max"],
                 values["auto"],
             )
@@ -273,17 +271,15 @@ class Callbacks:
             Input("btn-net-apply", "n_clicks"),
             State("set-net-mode", "value"),
             State("set-net-host", "value"),
-            State("set-net-port", "value"),
             State("set-net-max", "value"),
             State("set-net-auto", "value"),
             prevent_initial_call=True,
         )
-        def ApplyNetwork(clicks, mode, host, port, max_clients, auto):
+        def ApplyNetwork(clicks, mode, host, max_clients, auto):
             auto_start = "yes" in (auto or [])
             success, message = Service.ApplyNetwork(
                 Bridge.manager,
                 host or "",
-                str(port or ""),
                 mode or "Local",
                 str(max_clients if max_clients is not None else 0),
                 auto_start,
@@ -517,17 +513,23 @@ class Callbacks:
         return figure
 
     @classmethod
-    def BuildTable(cls, clients: list[str]):
+    def BuildTable(cls, clients: list[dict]):
         if not clients:
             return dbc.Alert("No clients connected.", color="secondary", className="mb-0")
 
-        rows = [html.Tr([html.Th("#"), html.Th("Address")])]
+        rows = [html.Tr([html.Th("#"), html.Th("Address"), html.Th("Role")])]
 
-        for index, address in enumerate(clients[:8], start=1):
-            rows.append(html.Tr([html.Td(str(index)), html.Td(address)]))
+        for index, client in enumerate(clients[:8], start=1):
+            rows.append(
+                html.Tr([
+                    html.Td(str(index)),
+                    html.Td(client["address"]),
+                    html.Td(cls.BuildRoleBadge(client)),
+                ])
+            )
 
         if len(clients) > 8:
-            rows.append(html.Tr([html.Td("…"), html.Td(f"+{len(clients) - 8} more")]))
+            rows.append(html.Tr([html.Td("…"), html.Td(f"+{len(clients) - 8} more"), html.Td("")]))
 
         return dbc.Table(
             [html.Thead(rows[0]), html.Tbody(rows[1:])],
@@ -538,17 +540,18 @@ class Callbacks:
         )
 
     @classmethod
-    def BuildFullTable(cls, clients: list[str]):
+    def BuildFullTable(cls, clients: list[dict]):
         if not clients:
             return dbc.Alert("No clients connected.", color="secondary", className="mb-0")
 
-        rows = [html.Tr([html.Th("#"), html.Th("Address"), html.Th("Status")])]
+        rows = [html.Tr([html.Th("#"), html.Th("Address"), html.Th("Role"), html.Th("Status")])]
 
-        for index, address in enumerate(clients, start=1):
+        for index, client in enumerate(clients, start=1):
             rows.append(
                 html.Tr([
                     html.Td(str(index)),
-                    html.Td(address),
+                    html.Td(client["address"]),
+                    html.Td(cls.BuildRoleBadge(client)),
                     html.Td(dbc.Badge("Active", color="success")),
                 ])
             )
@@ -561,6 +564,22 @@ class Callbacks:
             responsive=True,
             className="mb-0",
         )
+
+    @classmethod
+    def BuildRoleBadge(cls, client: dict):
+        role = client.get("role", "")
+        label = client.get("role_label", "Pending")
+
+        if role == "dm":
+            return dbc.Badge(label, color="warning", className="text-dark")
+
+        if role == "adventure":
+            return dbc.Badge(label, color="info")
+
+        if role == "watch":
+            return dbc.Badge(label, color="secondary")
+
+        return dbc.Badge(label, color="light", className="text-dark")
 
     @classmethod
     def BuildDatabaseSummary(cls, database: dict):

@@ -60,6 +60,39 @@ class Registry:
         with self.lock:
             return list(self.entries)
 
+    # Finds an entry by its socket reference.
+    def Find(self, peer: socket.socket) -> Entry | None:
+        with self.lock:
+            for entry in self.entries:
+                if entry.peer is peer:
+                    return entry
+
+        return None
+
+    # Applies a client role after a valid register message.
+    def Register(self, peer: socket.socket, role: str) -> tuple[bool, str]:
+        with self.lock:
+            entry = None
+
+            for item in self.entries:
+                if item.peer is peer:
+                    entry = item
+                    break
+
+            if entry is None:
+                return False, "Connection not found."
+
+            entry.role = role
+            entry.registered = True
+            address = entry.address
+
+        self.logger.info(
+            "Client registered | address=%s | role=%s",
+            address,
+            role,
+        )
+        return True, ""
+
     # Closes every registered client and clears the list during shutdown.
     def CloseAll(self) -> None:
         with self.lock:

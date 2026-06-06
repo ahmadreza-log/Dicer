@@ -33,9 +33,9 @@ class Bridge:
 
         return cls.manager.Status()
 
-    # Returns connected client address strings.
+    # Returns connected client details for dashboard tables.
     @classmethod
-    def Clients(cls) -> list[str]:
+    def Clients(cls) -> list[dict]:
         if cls.manager is None:
             return []
 
