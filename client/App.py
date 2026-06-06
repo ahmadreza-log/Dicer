@@ -1,6 +1,8 @@
 import customtkinter as ctk
 
-from screens.MainMenu import MainMenu
+from Navigator import Navigator
+from network.Session import Session
+from screens.Shell import Shell
 from Theme import Theme
 
 
@@ -16,12 +18,20 @@ class App(ctk.CTk):
         self.title(self.Title)
         self.geometry(f"{Theme.Width}x{Theme.Height}")
         self.minsize(Theme.MinWidth, Theme.MinHeight)
+        self.configure(fg_color=Theme.Background)
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.menu = MainMenu(self)
-        self.menu.grid(row=0, column=0, sticky="nsew")
+        self.shell = Shell(self, self)
+        self.shell.grid(row=0, column=0, sticky="nsew")
+
+        self.navigator = Navigator(self.shell)
+        self.protocol("WM_DELETE_WINDOW", self.OnClose)
+
+    def OnClose(self) -> None:
+        Session.Disconnect()
+        self.destroy()
 
     def Run(self) -> None:
         self.mainloop()
