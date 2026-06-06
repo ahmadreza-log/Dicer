@@ -1,83 +1,89 @@
 import customtkinter as ctk
 
+from Fonts import Fonts
 from Theme import Theme
+from Widgets import MenuButton, SectionTitle
 
 
 class MainMenu(ctk.CTkFrame):
-    # Home screen with a dedicated area for primary action buttons.
+    # Primary navigation screen inside the expanded content card.
 
-    def __init__(self, master, **kwargs) -> None:
+    Items = (
+        ("accent", "play", "Start", "Connect to the server and begin"),
+        ("primary", "house", "Rooms", "Browse and join game rooms"),
+        ("primary", "mage", "Characters", "Manage your characters"),
+        ("primary", "people", "Online Players", "See who is connected"),
+        ("primary", "bolt", "Settings", "Client preferences and network"),
+        ("danger", "door", "Exit", "Close the application"),
+    )
+
+    Handlers = {
+        "Start": "OnStart",
+        "Rooms": "OnRooms",
+        "Characters": "OnCharacters",
+        "Online Players": "OnOnlinePlayers",
+        "Settings": "OnSettings",
+        "Exit": "OnExit",
+    }
+
+    def __init__(self, master, navigator, **kwargs) -> None:
         super().__init__(master, fg_color="transparent", **kwargs)
 
+        self.navigator = navigator
+
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
 
         self.BuildHeader()
-        self.BuildBody()
+        self.BuildButtons()
 
     def BuildHeader(self) -> None:
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.grid(row=0, column=0, sticky="ew", padx=32, pady=(28, 12))
+        header.grid(row=0, column=0, sticky="ew")
         header.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(
-            header,
-            text="🎲 Dicer",
-            font=ctk.CTkFont(size=32, weight="bold"),
-        ).grid(row=0, column=0, sticky="w")
+        SectionTitle(header, "bolt", "Main Menu").grid(row=0, column=0, sticky="w")
 
         ctk.CTkLabel(
             header,
-            text="Client Application",
-            font=ctk.CTkFont(size=14),
-            text_color="gray70",
-        ).grid(row=1, column=0, sticky="w", pady=(4, 0))
+            text="Choose where you want to go",
+            font=Fonts.Caption(),
+            text_color=Theme.TextDim,
+        ).grid(row=1, column=0, sticky="w", pady=(6, 0))
 
-    def BuildBody(self) -> None:
-        body = ctk.CTkFrame(self, corner_radius=16)
-        body.grid(row=1, column=0, sticky="nsew", padx=32, pady=(12, 28))
-        body.grid_columnconfigure(0, weight=1)
-        body.grid_rowconfigure(1, weight=1)
-
-        ctk.CTkLabel(
-            body,
-            text="Main Menu",
-            font=ctk.CTkFont(size=22, weight="bold"),
-        ).grid(row=0, column=0, sticky="w", padx=24, pady=(24, 8))
-
-        ctk.CTkLabel(
-            body,
-            text="Choose an action below.",
-            font=ctk.CTkFont(size=13),
-            text_color="gray70",
-        ).grid(row=0, column=0, sticky="w", padx=24, pady=(52, 0))
-
-        self.buttons = ctk.CTkFrame(body, fg_color="transparent")
-        self.buttons.grid(row=1, column=0, sticky="nsew", padx=24, pady=24)
-        self.buttons.grid_columnconfigure(0, weight=1)
-
-        self.BuildButtons()
+        divider = ctk.CTkFrame(self, height=1, fg_color=Theme.BorderSoft)
+        divider.grid(row=1, column=0, sticky="ew", pady=(18, 0))
+        divider.grid_propagate(False)
 
     def BuildButtons(self) -> None:
-        # Placeholder layout — add real actions here in next steps.
-        ctk.CTkLabel(
-            self.buttons,
-            text="Buttons will be added here.",
-            font=ctk.CTkFont(size=13),
-            text_color="gray60",
-        ).grid(row=0, column=0, sticky="nw")
+        panel = ctk.CTkFrame(self, fg_color="transparent")
+        panel.grid(row=2, column=0, sticky="nsew", pady=(20, 0))
+        panel.grid_columnconfigure(0, weight=1)
 
-    def AddButton(self, text: str, command, row: int) -> ctk.CTkButton:
-        # Helper for adding menu buttons in a consistent style.
-        button = ctk.CTkButton(
-            self.buttons,
-            text=text,
-            command=command,
-            height=44,
-            corner_radius=10,
-            fg_color=Theme.Accent,
-            hover_color="#009f77",
-            anchor="w",
-        )
-        button.grid(row=row, column=0, sticky="ew", pady=6)
-        return button
+        for row, (variant, icon, label, _hint) in enumerate(self.Items):
+            handler = getattr(self, self.Handlers[label])
+            MenuButton(
+                panel,
+                icon=icon,
+                label=label,
+                command=handler,
+                variant=variant,
+            ).grid(row=row, column=0, sticky="ew", pady=5)
+
+    def OnStart(self) -> None:
+        self.navigator.ShowStart()
+
+    def OnRooms(self) -> None:
+        pass
+
+    def OnCharacters(self) -> None:
+        pass
+
+    def OnOnlinePlayers(self) -> None:
+        pass
+
+    def OnSettings(self) -> None:
+        self.navigator.ShowSettings()
+
+    def OnExit(self) -> None:
+        self.winfo_toplevel().destroy()
