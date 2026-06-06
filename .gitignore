@@ -39,6 +39,7 @@ server/logs/
 *.key
 credentials.json
 server/config/stored.json
+client/stored.json
 
 # 💻 IDE and editors
 .vscode/
