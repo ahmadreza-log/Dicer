@@ -67,13 +67,6 @@ class Forms:
                             [
                                 dbc.Col(
                                     [
-                                        dbc.Label("TCP Port"),
-                                        dbc.Input(id="set-net-port", type="number", min=1, max=65535),
-                                    ],
-                                    md=4,
-                                ),
-                                dbc.Col(
-                                    [
                                         dbc.Label("Max Clients (0 = unlimited)"),
                                         dbc.Input(id="set-net-max", type="number", min=0),
                                     ],
@@ -90,6 +83,15 @@ class Forms:
                                     ],
                                     md=4,
                                     className="d-flex flex-column justify-content-end",
+                                ),
+                                dbc.Col(
+                                    dbc.Alert(
+                                        f"TCP port {Network.Port} is fixed and cannot be changed.",
+                                        color="secondary",
+                                        className="mb-0 py-2",
+                                    ),
+                                    md=4,
+                                    className="d-flex align-items-end",
                                 ),
                             ],
                             className="mb-2 g-3",
@@ -451,7 +453,6 @@ class Forms:
             "net": {
                 "mode": Network.Mode,
                 "host": Network.Host,
-                "port": Network.Port,
                 "max": Network.MaxClients,
                 "auto": ["yes"] if Network.AutoStart else [],
             },

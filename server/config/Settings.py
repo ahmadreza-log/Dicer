@@ -1,13 +1,13 @@
 # Default network settings for local development and testing.
-# Values can be changed from the Settings panel or loaded from stored.json.
+# TCP port is fixed; only listen mode and limits are configurable.
 
 
 class Settings:
+    # Fixed TCP port for the central server — not configurable.
+    Port = 12055
+
     # Custom host used when Mode is set to "Custom".
     Host = "127.0.0.1"
-
-    # TCP port the central server listens on.
-    Port = 5555
 
     # Listen mode: "Local" (127.0.0.1), "Network" (0.0.0.0), or "Custom" (uses Host).
     Mode = "Local"

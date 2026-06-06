@@ -70,30 +70,23 @@ class Service:
         cls,
         manager,
         host: str,
-        port: str,
         mode: str,
         max_clients: str,
         auto_start: bool,
     ) -> tuple[bool, str]:
-        errors = cls.ValidateNetwork(host, port, mode, max_clients)
+        errors = cls.ValidateNetwork(host, mode, max_clients)
 
         if errors:
             return False, errors
 
-        port_value = cls.ParseInt(port)
         max_value = cls.ParseInt(max_clients)
 
-        if port_value is None or max_value is None:
-            return False, "Port and max clients must be valid numbers."
+        if max_value is None:
+            return False, "Max clients must be a valid number."
 
-        reload = (
-            host != Network.Host
-            or port_value != Network.Port
-            or mode != Network.Mode
-        )
+        reload = host != Network.Host or mode != Network.Mode
 
         Network.Host = host.strip()
-        Network.Port = port_value
         Network.Mode = mode
         Network.MaxClients = max_value
         Network.AutoStart = auto_start
@@ -124,7 +117,6 @@ class Service:
     def ValidateNetwork(
         cls,
         host: str,
-        port: str,
         mode: str,
         max_clients: str,
     ) -> str:
@@ -133,14 +125,6 @@ class Service:
 
         if mode == "Custom" and not str(host).strip():
             return "Host cannot be empty in Custom mode."
-
-        port_value = cls.ParseInt(port)
-
-        if port_value is None:
-            return "Port must be a number."
-
-        if port_value < 1 or port_value > 65535:
-            return "Port must be between 1 and 65535."
 
         max_value = cls.ParseInt(max_clients)
 

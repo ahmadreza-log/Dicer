@@ -13,10 +13,9 @@ class Network:
 
     Options = [
         ("1", "🌐  Change Host"),
-        ("2", "🔌  Change Port"),
-        ("3", "📡  Listen Mode"),
-        ("4", "👥  Max Clients"),
-        ("5", "🚀  Auto Start"),
+        ("2", "📡  Listen Mode"),
+        ("3", "👥  Max Clients"),
+        ("4", "🚀  Auto Start"),
     ]
 
     @classmethod
@@ -30,10 +29,9 @@ class Network:
 
             actions = {
                 "1": cls.ChangeHost,
-                "2": cls.ChangePort,
-                "3": cls.ChangeMode,
-                "4": cls.ChangeMaxClients,
-                "5": cls.ToggleAutoStart,
+                "2": cls.ChangeMode,
+                "3": cls.ChangeMaxClients,
+                "4": cls.ToggleAutoStart,
             }
 
             action = actions.get(choice)
@@ -69,27 +67,6 @@ class Network:
         Settings.Host = host
         Settings.Mode = "Custom"
         cls.Apply(manager, f"Host set to {host}.")
-
-    @classmethod
-    def ChangePort(cls, manager: Manager) -> None:
-        raw = Prompt.Ask(
-            title="Change Port",
-            rows=[("Current:", str(Settings.Port))],
-            label="New port",
-        )
-
-        if not raw.isdigit():
-            Message.Render(text="Port must be a number.", kind="error")
-            return
-
-        port = int(raw)
-
-        if port < 1 or port > 65535:
-            Message.Render(text="Port must be between 1 and 65535.", kind="error")
-            return
-
-        Settings.Port = port
-        cls.Apply(manager, f"Port set to {port}.")
 
     @classmethod
     def ChangeMode(cls, manager: Manager) -> None:

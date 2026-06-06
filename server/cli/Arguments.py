@@ -17,13 +17,6 @@ class Arguments:
         )
 
         parser.add_argument(
-            "--port",
-            type=int,
-            default=None,
-            help=f"Override TCP port (default: from settings / {Settings.Port})",
-        )
-
-        parser.add_argument(
             "--level",
             default=LogSettings.Level,
             choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],

@@ -12,7 +12,6 @@ class Bundle:
     Defaults = {
         "network": {
             "Host": "127.0.0.1",
-            "Port": 5555,
             "Mode": "Local",
             "MaxClients": 0,
             "AutoStart": True,
@@ -61,7 +60,6 @@ class Bundle:
         return {
             "network": {
                 "Host": Network.Host,
-                "Port": Network.Port,
                 "Mode": Network.Mode,
                 "MaxClients": Network.MaxClients,
                 "AutoStart": Network.AutoStart,
@@ -109,7 +107,6 @@ class Bundle:
     def Apply(data: dict) -> None:
         network = data.get("network", {})
         Network.Host = network.get("Host", Network.Host)
-        Network.Port = int(network.get("Port", Network.Port))
         Network.Mode = network.get("Mode", Network.Mode)
         Network.MaxClients = int(network.get("MaxClients", Network.MaxClients))
         Network.AutoStart = bool(network.get("AutoStart", Network.AutoStart))

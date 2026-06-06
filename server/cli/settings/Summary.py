@@ -39,7 +39,7 @@ class Summary:
     def Network(cls) -> list[str]:
         return cls.Lines([
             ("Host:", NetworkSettings.Host),
-            ("Port:", str(NetworkSettings.Port)),
+            ("Port:", f"{NetworkSettings.Port} (fixed)"),
             ("Mode:", NetworkSettings.Mode),
             ("Bind:", ResolveHost()),
             ("Max Clients:", cls.FormatLimit(NetworkSettings.MaxClients)),
@@ -131,7 +131,7 @@ class Summary:
         return [
             ("── Network ──", ""),
             ("Host:", NetworkSettings.Host),
-            ("Port:", str(NetworkSettings.Port)),
+            ("Port:", f"{NetworkSettings.Port} (fixed)"),
             ("Mode:", NetworkSettings.Mode),
             ("Bind:", bind),
             ("Max Clients:", cls.FormatLimit(NetworkSettings.MaxClients)),

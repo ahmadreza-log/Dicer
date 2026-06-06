@@ -28,7 +28,7 @@ def Main() -> None:
 
 def RunHeadless(arguments, logger) -> None:
     host = arguments.host if arguments.host else ResolveHost()
-    port = arguments.port if arguments.port else Network.Port
+    port = Network.Port
 
     logger.info(
         "Starting Dicer server | host=%s | port=%d | level=%s",
