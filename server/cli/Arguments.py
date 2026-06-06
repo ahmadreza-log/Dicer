@@ -36,4 +36,23 @@ class Arguments:
             help="Start the server directly without the management panel",
         )
 
+        parser.add_argument(
+            "--dash",
+            action="store_true",
+            help="Start the Plotly Dash web dashboard instead of the CLI panel",
+        )
+
+        parser.add_argument(
+            "--dash-host",
+            default=None,
+            help="Override Dash bind address (default: from board/Settings.py)",
+        )
+
+        parser.add_argument(
+            "--dash-port",
+            type=int,
+            default=None,
+            help="Override Dash HTTP port (default: from board/Settings.py)",
+        )
+
         return parser.parse_args()

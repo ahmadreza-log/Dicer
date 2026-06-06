@@ -20,6 +20,8 @@ def Main() -> None:
 
     if arguments.headless:
         RunHeadless(arguments, logger)
+    elif arguments.dash:
+        RunDash(arguments, logger)
     else:
         RunPanel(logger)
 
@@ -53,6 +55,20 @@ def RunPanel(logger) -> None:
     logger.info("Opening management panel")
 
     Menu.Run()
+
+
+def RunDash(arguments, logger) -> None:
+    from board.App import App
+    from board.Settings import Settings as Board
+    from cli.Manager import Manager
+
+    host = arguments.dash_host or Board.Host
+    port = arguments.dash_port or Board.Port
+
+    logger.info("Opening Dash dashboard | host=%s | port=%d", host, port)
+
+    manager = Manager()
+    App.Run(manager, host=host, port=port)
 
 
 if __name__ == "__main__":

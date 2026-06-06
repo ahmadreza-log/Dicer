@@ -12,9 +12,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### ✨ Added
+- 📈 Plotly Dash 4.x web dashboard (`server/board/`) — live status, server controls, client chart, MySQL panel
 - 🗄️ MySQL database layer with pluggable `database/Engine.py` facade and `mysql/Driver.py`
 - ⚙️ Database settings submenu — enable, host, port, user, password, test, connect/disconnect
-- 📦 `requirements.txt` with `mysql-connector-python`
+- 📦 `requirements.txt` with `mysql-connector-python`, `dash`, `plotly`, `dash-bootstrap-components`
+- ⌨️ CLI flags `--dash`, `--dash-host`, `--dash-port`
 
 ### 🔧 Changed
 - 🗄️ Fix database menu — lazy MySQL import, direct toggle, test works without enabling first

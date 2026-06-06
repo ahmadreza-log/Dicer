@@ -28,6 +28,7 @@ A peer-to-peer networking platform where users connect through a **central TCP s
 
 - 🔌 **TCP socket server** — multi-client, threaded connections
 - 🗄️ **MySQL database layer** — pluggable engine with CLI settings (disabled by default)
+- 📈 **Plotly Dash dashboard** — web UI for server status, controls, and live charts (Dash 4.x)
 - 📊 **Detailed logging** — console + rotating file logs
 - ⚙️ **CLI configuration** — host, port, and log level
 - 🛑 **Graceful shutdown** — clean exit on Ctrl+C
@@ -98,6 +99,30 @@ For direct server start without the panel:
 python main.py --headless
 ```
 
+### 📈 Web Dashboard (Plotly Dash 4.x)
+
+Run the browser-based management dashboard instead of the CLI panel:
+
+```bash
+python main.py --dash
+```
+
+Open **http://127.0.0.1:8050** (default). The TCP server auto-starts when `AutoStart` is enabled in settings.
+
+| Widget | Description |
+|--------|-------------|
+| Status cards | Server state, host, uptime, client count |
+| Controls | Start, Stop, Restart |
+| Live chart | Connected clients over time |
+| Client table | Active connection addresses |
+| Database | MySQL connect, test, disconnect |
+
+```bash
+python main.py --dash --dash-host 127.0.0.1 --dash-port 8050
+```
+
+Built with [Plotly Dash 4.x](https://dash.plotly.com) and `dash-bootstrap-components` (CYBORG theme).
+
 ### 🧪 Test a Connection
 
 ```bash
@@ -114,11 +139,15 @@ Connected to Dicer server
 
 ## ⚙️ CLI Options
 
-| Flag       | Default      | Description                    |
-|------------|--------------|--------------------------------|
-| `--host`   | `127.0.0.1`  | Address the server binds to    |
-| `--port`   | `5555`       | TCP port to listen on          |
-| `--level`  | `INFO`       | Log level (`DEBUG` … `CRITICAL`) |
+| Flag           | Default      | Description                              |
+|----------------|--------------|------------------------------------------|
+| `--host`       | `127.0.0.1`  | Address the server binds to            |
+| `--port`       | `5555`       | TCP port to listen on                    |
+| `--level`      | `INFO`       | Log level (`DEBUG` … `CRITICAL`)         |
+| `--headless`   | off          | Start TCP server only (no panel)         |
+| `--dash`       | off          | Start Plotly Dash web dashboard          |
+| `--dash-host`  | `127.0.0.1`  | Dash bind address                        |
+| `--dash-port`  | `8050`       | Dash HTTP port                           |
 
 ```bash
 python main.py --host 127.0.0.1 --port 5555 --level DEBUG
@@ -136,6 +165,12 @@ Dicer/
 │   │   └── Settings.py      # 🌐 Network defaults
 │   ├── cli/
 │   │   └── Arguments.py     # ⌨️ CLI parsing
+│   ├── board/
+│   │   ├── App.py           # 📈 Dash application entry
+│   │   ├── Layout.py        # 🎨 Dashboard layout
+│   │   ├── Callbacks.py     # 🔄 Live updates & controls
+│   │   ├── Bridge.py        # 🔗 Manager ↔ Dash bridge
+│   │   └── Settings.py      # ⚙️ Dash host/port defaults
 │   ├── network/
 │   │   ├── Server.py        # 🖥️ TCP listener
 │   │   ├── Handler.py       # 🔗 Per-client handler
@@ -208,6 +243,7 @@ Example line:
 - [x] Multi-client threading
 - [x] Structured logging system
 - [x] MySQL database layer (pluggable drivers)
+- [x] Plotly Dash 4.x web dashboard (`python main.py --dash`)
 - [ ] Client application (`client/`)
 - [ ] User registration and discovery
 - [ ] Message relay between clients
