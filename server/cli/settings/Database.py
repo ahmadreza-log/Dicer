@@ -156,14 +156,16 @@ class Database:
 
     @classmethod
     def ToggleConnect(cls, manager: Manager) -> None:
-        if not Settings.Enabled:
-            Message.Render(text="Enable the database in settings first.", kind="error")
-            return
-
         if Engine.IsActive():
             Engine.Disconnect()
+            Settings.Enabled = False
             Message.Render(text="Database disconnected.", kind="success")
-        else:
-            success, message = Engine.Connect()
-            kind = "success" if success else "error"
-            Message.Render(text=message, kind=kind)
+            return
+
+        success, message = Engine.ConnectDirect()
+
+        if success:
+            Settings.Enabled = True
+
+        kind = "success" if success else "error"
+        Message.Render(text=message, kind=kind)

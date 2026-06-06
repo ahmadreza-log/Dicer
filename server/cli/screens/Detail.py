@@ -11,6 +11,7 @@ class Detail:
 
         lines = [f"{label:<16} {value}" for label, value in rows]
         Panel.Box(title, lines)
+        cls.Wait()
 
     # Renders a numbered list inside a detail box (used for client lists).
     @classmethod
@@ -24,3 +25,13 @@ class Detail:
             lines = [empty]
 
         Panel.Box(title, lines)
+        cls.Wait()
+
+    # Waits for user input before returning to the previous menu.
+    @classmethod
+    def Wait(cls) -> None:
+        try:
+            Panel.Prompt()
+            input()
+        except EOFError:
+            pass

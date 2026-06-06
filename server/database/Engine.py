@@ -26,6 +26,11 @@ class Engine:
         if not Settings.Enabled:
             return False, "Database is disabled in settings."
 
+        return cls.ConnectDirect()
+
+    # Connects directly without checking the Enabled flag.
+    @classmethod
+    def ConnectDirect(cls) -> tuple[bool, str]:
         cls.Disconnect()
         cls.driver = cls.Create()
         return cls.driver.Connect()
@@ -59,6 +64,6 @@ class Engine:
             return True, "Settings updated."
 
         if was_active:
-            return cls.Connect()
+            return cls.ConnectDirect()
 
         return True, "Settings updated."

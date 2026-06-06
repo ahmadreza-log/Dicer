@@ -25,3 +25,13 @@ class Message:
         heading = title or cls.Titles.get(kind, "Message")
 
         Panel.Box(heading, [f"{icon}  {text}"])
+        cls.Wait()
+
+    # Waits for user input before returning to the previous menu.
+    @classmethod
+    def Wait(cls) -> None:
+        try:
+            Panel.Prompt()
+            input()
+        except EOFError:
+            pass
