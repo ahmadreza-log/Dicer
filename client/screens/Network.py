@@ -2,6 +2,7 @@ import customtkinter as ctk
 
 from Fonts import Fonts
 from network.Probe import Probe
+from network.Session import Session
 from Settings import Settings
 from Store import Store
 from Theme import Theme
@@ -106,6 +107,7 @@ class Network(ctk.CTkFrame):
             return
 
         Settings.ApplyHost(host)
+        Session.Disconnect()
         saved, message = Store.Save()
         self.LoadFields()
 

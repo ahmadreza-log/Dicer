@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
 from Fonts import Fonts
+from network.Session import Session
 from Theme import Theme
 from Widgets import MenuButton, SectionTitle
 
@@ -71,6 +72,12 @@ class MainMenu(ctk.CTkFrame):
             ).grid(row=row, column=0, sticky="ew", pady=5)
 
     def OnStart(self) -> None:
+        success, message = Session.Connect()
+
+        if not success:
+            self.navigator.ShowNotice("Connection Failed", message, success=False)
+            return
+
         self.navigator.ShowStart()
 
     def OnRooms(self) -> None:

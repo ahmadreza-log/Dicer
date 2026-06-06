@@ -6,23 +6,27 @@ from network.Protocol import Protocol
 
 
 class Session:
-    # Keeps a live TCP connection after the client registers with the server.
+    # Persistent TCP connection to the central server.
 
     peer: socket.socket | None = None
     role: str | None = None
+    room: dict | None = None
     thread: threading.Thread | None = None
     running = False
+    _buffer = ""
+    _lock = threading.Lock()
 
     @classmethod
     def IsConnected(cls) -> bool:
         return cls.peer is not None
 
     @classmethod
-    def Register(cls, role: str) -> tuple[bool, str]:
-        if role not in Protocol.ValidRoles:
-            return False, "Invalid role."
+    def Connect(cls) -> tuple[bool, str]:
+        if cls.IsConnected():
+            return True, "Already connected to server."
 
         cls.Disconnect()
+        cls._buffer = ""
 
         try:
             peer = socket.create_connection(
@@ -33,57 +37,87 @@ class Session:
             return False, f"Could not connect to {Settings.Host}:{Settings.Port}. {error}"
 
         try:
+            peer.settimeout(Settings.Timeout)
             welcome = cls.ReadLine(peer)
 
             if not welcome:
                 peer.close()
                 return False, "Server closed the connection."
 
-            peer.sendall(Protocol.Register(role))
-            response = cls.ReadLine(peer)
-
-            if not response:
-                peer.close()
-                return False, "No response from server."
-
-            payload = Protocol.Parse(response)
-
-            if payload is None or not payload.get("ok"):
-                peer.close()
-                error = payload.get("error", "Registration failed.") if payload else "Registration failed."
-                return False, error
-
+            peer.settimeout(None)
             cls.peer = peer
-            cls.role = role
-            cls.running = True
-            cls.thread = threading.Thread(target=cls.Listen, daemon=True)
-            cls.thread.start()
-            return True, Protocol.Label(role)
+            cls.role = Protocol.DefaultRole
+            return True, welcome
 
         except OSError as error:
             peer.close()
             return False, str(error)
 
     @classmethod
-    def ReadLine(cls, peer: socket.socket) -> str:
-        buffer = ""
+    def Register(cls, role: str, room: dict | None = None) -> tuple[bool, str]:
+        if role not in Protocol.ValidRoles:
+            return False, "Invalid role."
 
-        while "\n" not in buffer:
+        if not cls.IsConnected():
+            success, message = cls.Connect()
+
+            if not success:
+                return False, message
+
+        with cls._lock:
+            try:
+                cls.peer.sendall(Protocol.Register(role, room))
+                response = cls.ReadLine(cls.peer)
+
+                if not response:
+                    cls.Disconnect()
+                    return False, "No response from server."
+
+                payload = Protocol.Parse(response)
+
+                if payload is None or not payload.get("ok"):
+                    error = payload.get("error", "Registration failed.") if payload else "Registration failed."
+                    return False, error
+
+                cls.role = role
+                cls.room = payload.get("room") if isinstance(payload.get("room"), dict) else None
+                cls.StartListen()
+                return True, Protocol.Label(role)
+
+            except OSError as error:
+                cls.Disconnect()
+                return False, str(error)
+
+    @classmethod
+    def StartListen(cls) -> None:
+        if cls.running or cls.peer is None:
+            return
+
+        cls.running = True
+        cls.thread = threading.Thread(target=cls.Listen, name="SessionListen", daemon=True)
+        cls.thread.start()
+
+    @classmethod
+    def ReadLine(cls, peer: socket.socket) -> str:
+        while "\n" not in cls._buffer:
             chunk = peer.recv(4096)
 
             if not chunk:
                 return ""
 
-            buffer += chunk.decode("utf-8", errors="replace")
+            cls._buffer += chunk.decode("utf-8", errors="replace")
 
-        line, _rest = buffer.split("\n", 1)
+        line, cls._buffer = cls._buffer.split("\n", 1)
         return line.strip()
 
     @classmethod
     def Listen(cls) -> None:
         while cls.running and cls.peer is not None:
             try:
-                chunk = cls.peer.recv(4096)
+                with cls._lock:
+                    if cls.peer is None:
+                        break
+                    chunk = cls.peer.recv(4096)
             except OSError:
                 break
 
@@ -104,3 +138,5 @@ class Session:
 
         cls.peer = None
         cls.role = None
+        cls.room = None
+        cls._buffer = ""
