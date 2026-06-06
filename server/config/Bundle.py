@@ -1,3 +1,4 @@
+from board.Settings import Settings as Panel
 from config.Settings import Settings as Network
 from connection.Settings import Settings as Connection
 from database.Settings import Settings as Database
@@ -46,6 +47,12 @@ class Bundle:
             "Password": "",
             "Name": "dicer",
         },
+        "panel": {
+            "Host": "127.0.0.1",
+            "Port": 8050,
+            "Debug": False,
+            "Interval": 2000,
+        },
     }
 
     # Captures all current settings as a dictionary.
@@ -88,6 +95,12 @@ class Bundle:
                 "User": Database.User,
                 "Password": Database.Password,
                 "Name": Database.Name,
+            },
+            "panel": {
+                "Host": Panel.Host,
+                "Port": Panel.Port,
+                "Debug": Panel.Debug,
+                "Interval": Panel.Interval,
             },
         }
 
@@ -132,6 +145,12 @@ class Bundle:
         Database.User = database.get("User", Database.User)
         Database.Password = database.get("Password", Database.Password)
         Database.Name = database.get("Name", Database.Name)
+
+        panel = data.get("panel", {})
+        Panel.Host = panel.get("Host", Panel.Host)
+        Panel.Port = int(panel.get("Port", Panel.Port))
+        Panel.Debug = bool(panel.get("Debug", Panel.Debug))
+        Panel.Interval = int(panel.get("Interval", Panel.Interval))
 
     # Restores every setting to its factory default value.
     @staticmethod

@@ -12,6 +12,7 @@ class Bridge:
     history: list[dict] = []
     limit = 60
     alert = ""
+    activities: list[dict] = []
 
     # Attaches the active server manager instance.
     @classmethod
@@ -61,6 +62,7 @@ class Bridge:
             "active": Engine.IsActive(),
             "host": Database.Host,
             "port": Database.Port,
+            "user": Database.User,
             "name": Database.Name,
         }
 
@@ -69,6 +71,19 @@ class Bridge:
     def Notify(cls, message: str) -> str:
         cls.alert = message
         return message
+
+    # Appends an entry to the recent activity feed.
+    @classmethod
+    def Log(cls, message: str, kind: str = "info") -> None:
+        entry = {
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "message": message,
+            "kind": kind,
+        }
+        cls.activities.insert(0, entry)
+
+        if len(cls.activities) > 20:
+            cls.activities.pop()
 
     # Cleans up server and database on dashboard shutdown.
     @classmethod

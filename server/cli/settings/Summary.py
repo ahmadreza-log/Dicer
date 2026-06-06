@@ -1,3 +1,4 @@
+from board.Settings import Settings as PanelSettings
 from config.Settings import ResolveHost
 from config.Settings import Settings as NetworkSettings
 from config.Store import Store
@@ -163,6 +164,11 @@ class Summary:
             ("── Storage ──", ""),
             ("File:", Store.Filename),
             ("Saved:", cls.FormatBool(Store.Path().exists())),
+            ("── Panel ──", ""),
+            ("Dash Host:", PanelSettings.Host),
+            ("Dash Port:", str(PanelSettings.Port)),
+            ("Refresh:", f"{PanelSettings.Interval // 1000}s"),
+            ("Debug:", cls.FormatBool(PanelSettings.Debug)),
             ("── Runtime ──", ""),
             ("State:", "Running" if status["active"] else "Stopped"),
             ("Clients:", str(status["clients"])),

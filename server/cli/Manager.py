@@ -57,6 +57,13 @@ class Manager:
 
         return self.Start()
 
+    # Restarts the server when it is running; no-op when already stopped.
+    def ReloadIfActive(self) -> tuple[bool, str]:
+        if not self.IsActive():
+            return True, ""
+
+        return self.Restart()
+
     # Stops the server, applies network setting changes, and restarts if it was running.
     def ReloadAfterNetworkChange(self) -> tuple[bool, str]:
         was_active = self.IsActive()
