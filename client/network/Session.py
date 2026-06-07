@@ -15,6 +15,15 @@ class Session:
     running = False
     _buffer = ""
     _lock = threading.Lock()
+    _room_closed_handler = None
+
+    @classmethod
+    def SetRoomClosedHandler(cls, handler) -> None:
+        cls._room_closed_handler = handler
+
+    @classmethod
+    def InRoom(cls) -> bool:
+        return cls.role in Protocol.ValidRoles and cls.room is not None
 
     @classmethod
     def IsConnected(cls) -> bool:
@@ -55,6 +64,8 @@ class Session:
 
     @classmethod
     def Request(cls, payload: bytes) -> tuple[bool, dict | str]:
+        cls._StopListen()
+
         if not cls.IsConnected():
             success, message = cls.Connect()
 
@@ -170,17 +181,10 @@ class Session:
                 cls.StartListen()
             return True, ""
 
-        if cls.IsConnected() and cls.running:
+        if cls.IsConnected():
             return True, ""
 
-        if not cls.IsConnected():
-            success, message = cls.Connect()
-
-            if not success:
-                return False, message
-
-        cls.StartListen()
-        return True, ""
+        return cls.Connect()
 
     @classmethod
     def Register(
@@ -202,6 +206,8 @@ class Session:
 
             if not success:
                 return False, message
+
+        cls._StopListen()
 
         with cls._lock:
             try:
@@ -230,6 +236,35 @@ class Session:
                 return False, str(error)
 
     @classmethod
+    def LeaveRoom(cls) -> tuple[bool, str]:
+        if not cls.InRoom():
+            return False, "Not in a room."
+
+        cls._StopListen()
+
+        with cls._lock:
+            try:
+                cls.peer.sendall(Protocol.LeaveRoom())
+                response = cls.ReadLine(cls.peer)
+
+                if not response:
+                    return False, "No response from server."
+
+                payload = Protocol.Parse(response)
+
+                if payload is None or not payload.get("ok"):
+                    error = payload.get("error", "Could not leave the room.") if payload else "Could not leave the room."
+                    return False, error
+
+                cls.role = Protocol.DefaultRole
+                cls.room = None
+                return True, ""
+
+            except OSError as error:
+                cls.Disconnect()
+                return False, str(error)
+
+    @classmethod
     def StartListen(cls) -> None:
         if cls.running or cls.peer is None:
             return
@@ -237,6 +272,19 @@ class Session:
         cls.running = True
         cls.thread = threading.Thread(target=cls.Listen, name="SessionListen", daemon=True)
         cls.thread.start()
+
+    @classmethod
+    def _StopListen(cls) -> None:
+        if not cls.running:
+            return
+
+        cls.running = False
+        thread = cls.thread
+
+        if thread is not None and thread.is_alive() and thread is not threading.current_thread():
+            thread.join(timeout=1.5)
+
+        cls.thread = None
 
     @classmethod
     def ReadLine(cls, peer: socket.socket) -> str:
@@ -256,20 +304,66 @@ class Session:
         while cls.running and cls.peer is not None:
             try:
                 with cls._lock:
-                    if cls.peer is None:
-                        break
-                    chunk = cls.peer.recv(4096)
+                    peer = cls.peer
+
+                if peer is None:
+                    break
+
+                peer.settimeout(1.0)
+                chunk = peer.recv(4096)
+                peer.settimeout(None)
+            except TimeoutError:
+                continue
             except OSError:
                 break
 
             if not chunk:
                 break
 
+            cls._buffer += chunk.decode("utf-8", errors="replace")
+
+            while "\n" in cls._buffer:
+                line, cls._buffer = cls._buffer.split("\n", 1)
+                cls._HandlePush(line.strip())
+
+        if cls.running:
+            cls._HandleDisconnect()
+
+    @classmethod
+    def _HandlePush(cls, line: str) -> None:
+        if not line:
+            return
+
+        payload = Protocol.Parse(line)
+
+        if payload is None:
+            return
+
+        if payload.get("type") != "room_closed":
+            return
+
+        reason = str(payload.get("reason", "") or "")
+        handler = cls._room_closed_handler
+        cls.running = False
+
+        if handler is not None:
+            handler(reason)
+            return
+
         cls.Disconnect()
 
     @classmethod
+    def _HandleDisconnect(cls) -> None:
+        was_in_room = cls.InRoom()
+        handler = cls._room_closed_handler if was_in_room else None
+        cls.Disconnect()
+
+        if handler is not None:
+            handler("")
+
+    @classmethod
     def Disconnect(cls) -> None:
-        cls.running = False
+        cls._StopListen()
 
         if cls.peer is not None:
             try:

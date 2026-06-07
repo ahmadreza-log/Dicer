@@ -32,7 +32,7 @@ class Protocol:
     def ListCampaigns(cls) -> bytes:
         payload = {
             "type": "list_campaigns",
-            **_UserPayload(),
+            **cls._UserPayload(),
         }
         return cls.Encode(payload)
 
@@ -44,7 +44,7 @@ class Protocol:
             "capacity": capacity,
             "private": private,
             "password": password,
-            **_UserPayload(),
+            **cls._UserPayload(),
         }
         return cls.Encode(payload)
 
@@ -96,7 +96,7 @@ class Protocol:
         payload: dict = {
             "type": "register",
             "role": role,
-            **_UserPayload(),
+            **cls._UserPayload(),
         }
 
         if role == "dm":
@@ -110,6 +110,14 @@ class Protocol:
         if password:
             payload["password"] = password
 
+        return cls.Encode(payload)
+
+    @classmethod
+    def LeaveRoom(cls) -> bytes:
+        payload = {
+            "type": "leave_room",
+            **cls._UserPayload(),
+        }
         return cls.Encode(payload)
 
     @classmethod
