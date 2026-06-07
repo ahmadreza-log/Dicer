@@ -5,7 +5,7 @@ from i18n.Locale import Locale
 from Layout import Layout
 from network.Session import Session
 from Theme import Theme
-from Widgets import SectionTitle
+from Widgets import BackButton, FormField, SectionTitle
 
 
 class Room(ctk.CTkFrame):
@@ -17,9 +17,10 @@ class Room(ctk.CTkFrame):
         self.navigator = navigator
 
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(3, weight=1)
 
         self.BuildHeader()
+        self.BuildSettings()
         self.BuildChat()
 
     def Refresh(self) -> None:
@@ -46,6 +47,126 @@ class Room(ctk.CTkFrame):
         else:
             self.campaign_label.grid_remove()
 
+        if role == "dm":
+            self.settings_panel.grid()
+            visibility = str(room.get("visibility", "public")).lower()
+            visibility_label = (
+                Locale.t("campaign.visibility.private")
+                if visibility == "private"
+                else Locale.t("campaign.visibility.public")
+            )
+            password = str(room.get("password", "") or "")
+            capacity = int(room.get("capacity", 0) or 0)
+            players = int(room.get("players", 0) or 0)
+            members = int(room.get("members", 0) or 0)
+
+            self.SetReadOnly(self.settings_name, campaign_name or "—")
+            self.SetReadOnly(self.settings_capacity, str(capacity) if capacity else "—")
+            self.SetReadOnly(self.settings_visibility, visibility_label)
+            self.SetReadOnly(
+                self.settings_password,
+                password if password else Locale.t("room.settings.password.none"),
+            )
+            self.SetReadOnly(
+                self.settings_occupancy,
+                Locale.t(
+                    "room.settings.occupancy",
+                    players=players,
+                    members=members,
+                    capacity=capacity,
+                ),
+            )
+            return
+
+        self.settings_panel.grid_remove()
+
+    def SetReadOnly(self, field: FormField, value: str) -> None:
+        field.input.configure(state="normal")
+        field.Set(value)
+        field.input.configure(state="readonly")
+
+    def BuildSettings(self) -> None:
+        panel = ctk.CTkFrame(self, fg_color=Theme.SurfaceRaised, corner_radius=Theme.RadiusSmall)
+        panel.grid(row=2, column=0, sticky="ew", pady=(20, 0))
+        panel.grid_columnconfigure(0, weight=1)
+        panel.grid_remove()
+        self.settings_panel = panel
+
+        SectionTitle(panel, "bolt", Locale.t("room.settings.title")).grid(
+            row=0,
+            column=0,
+            sticky=Layout.Sticky(),
+            padx=16,
+            pady=(16, 12),
+        )
+
+        form = ctk.CTkFrame(panel, fg_color="transparent")
+        form.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 16))
+        form.grid_columnconfigure((0, 1), weight=1)
+
+        self.settings_name = self.ReadOnlyField(
+            form,
+            Locale.t("room.settings.name"),
+            row=0,
+            column=0,
+            padx=(0, 8),
+            pady=(0, 10),
+        )
+        self.settings_capacity = self.ReadOnlyField(
+            form,
+            Locale.t("room.settings.capacity"),
+            row=0,
+            column=1,
+            padx=(8, 0),
+            pady=(0, 10),
+        )
+        self.settings_visibility = self.ReadOnlyField(
+            form,
+            Locale.t("room.settings.visibility"),
+            row=1,
+            column=0,
+            padx=(0, 8),
+            pady=(0, 10),
+        )
+        self.settings_password = self.ReadOnlyField(
+            form,
+            Locale.t("room.settings.password"),
+            row=1,
+            column=1,
+            padx=(8, 0),
+            pady=(0, 10),
+        )
+        self.settings_occupancy = self.ReadOnlyField(
+            form,
+            Locale.t("room.settings.occupancy.label"),
+            row=2,
+            column=0,
+            columnspan=2,
+            pady=(0, 0),
+        )
+
+    def ReadOnlyField(
+        self,
+        master,
+        label: str,
+        row: int,
+        column: int,
+        columnspan: int = 1,
+        padx=0,
+        pady=0,
+    ) -> FormField:
+        field = FormField(master, label, "")
+        field.grid(
+            row=row,
+            column=column,
+            columnspan=columnspan,
+            sticky="ew",
+            padx=padx,
+            pady=pady,
+        )
+        field.input.configure(state="readonly")
+        return field
+
     def CopyRoomId(self) -> None:
         room_id = getattr(self, "_room_id", "")
 
@@ -64,12 +185,52 @@ class Room(ctk.CTkFrame):
         if self.copy_button.winfo_exists():
             self.copy_button.configure(text=Locale.t("room.id.copy"))
 
+    def LeaveRoom(self) -> None:
+        self.leave_button.configure(state="disabled")
+        self.back_button.configure(state="disabled")
+
+        success, message = Session.LeaveRoom()
+
+        if not success:
+            self.leave_button.configure(state="normal")
+            self.back_button.configure(state="normal")
+            self.navigator.ShowNotice(Locale.t("room.leave.error"), message, success=False)
+            return
+
+        self.navigator.GoBack()
+
     def BuildHeader(self) -> None:
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew")
-        header.grid_columnconfigure(0, weight=1)
+        header.grid_columnconfigure(1, weight=1)
 
-        SectionTitle(header, "house", Locale.t("room.title")).grid(row=0, column=0, sticky=Layout.Sticky())
+        self.back_button = BackButton(header, command=self.LeaveRoom)
+        titles = ctk.CTkFrame(header, fg_color="transparent")
+        titles.grid_columnconfigure(0, weight=1)
+        Layout.PlaceScreenHeader(self.back_button, titles)
+
+        title_row = ctk.CTkFrame(titles, fg_color="transparent")
+        title_row.grid(row=0, column=0, sticky="ew")
+        title_row.grid_columnconfigure(0, weight=1)
+
+        SectionTitle(title_row, "house", Locale.t("room.title")).grid(
+            row=0,
+            column=0,
+            sticky=Layout.Sticky(),
+        )
+
+        self.leave_button = ctk.CTkButton(
+            title_row,
+            text=Locale.t("room.leave"),
+            command=self.LeaveRoom,
+            width=120,
+            height=36,
+            font=Fonts.Button(),
+            corner_radius=Theme.RadiusSmall,
+            fg_color=Theme.Danger,
+            hover_color=Theme.DangerHover,
+        )
+        self.leave_button.grid(row=0, column=1, sticky="e", padx=(12, 0))
 
         self.role_label = Layout.Label(
             header,
@@ -131,7 +292,7 @@ class Room(ctk.CTkFrame):
 
     def BuildChat(self) -> None:
         panel = ctk.CTkFrame(self, fg_color=Theme.SurfaceRaised, corner_radius=Theme.RadiusSmall)
-        panel.grid(row=2, column=0, sticky="nsew", pady=(20, 0))
+        panel.grid(row=3, column=0, sticky="nsew", pady=(20, 0))
         panel.grid_columnconfigure(0, weight=1)
         panel.grid_rowconfigure(0, weight=1)
 
