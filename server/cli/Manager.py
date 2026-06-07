@@ -36,6 +36,10 @@ class Manager:
             if not success:
                 return False, f"Could not start server. {message}"
 
+            from database.campaigns.Repository import Repository as Campaigns
+
+            Campaigns.ClearLiveRoomIds()
+
         self.server = Server(host=self.host, port=self.port)
         self.server.Launch()
         time.sleep(0.3)

@@ -43,6 +43,10 @@ def RunHeadless(arguments, logger) -> None:
 
         if not success:
             logger.error("Server starting without database: %s", message)
+        else:
+            from database.campaigns.Repository import Repository as Campaigns
+
+            Campaigns.ClearLiveRoomIds()
 
     server = Server(host=host, port=port)
 

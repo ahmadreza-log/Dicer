@@ -128,6 +128,15 @@ class Registry:
 
         return None
 
+    # Returns the active room tied to a saved campaign id, if any.
+    def FindByCampaignId(self, campaign_id: int) -> Room | None:
+        with self.lock:
+            for room in self.rooms.values():
+                if room.campaign_id == campaign_id:
+                    return room
+
+        return None
+
     # Returns a snapshot of all active rooms.
     def List(self) -> list[Room]:
         with self.lock:
