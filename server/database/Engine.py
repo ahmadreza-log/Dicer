@@ -33,7 +33,12 @@ class Engine:
     def ConnectDirect(cls) -> tuple[bool, str]:
         cls.Disconnect()
         cls.driver = cls.Create()
-        return cls.driver.Connect()
+        success, message = cls.driver.Connect()
+
+        if success:
+            cls._Prepare()
+
+        return success, message
 
     # Disconnects from the database and releases the driver.
     @classmethod
@@ -42,6 +47,16 @@ class Engine:
             cls.driver.Disconnect()
 
         cls.driver = None
+
+    # Ensures campaign tables exist after a successful connection.
+    @classmethod
+    def _Prepare(cls) -> None:
+        if not cls.IsActive():
+            return
+
+        from database.campaigns.Repository import Repository as Campaigns
+
+        Campaigns.Ensure()
 
     # Tests the connection without keeping it open (works even when disabled).
     @classmethod

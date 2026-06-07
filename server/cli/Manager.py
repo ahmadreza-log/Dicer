@@ -125,6 +125,8 @@ class Manager:
                 "dm": room.dm_address,
                 "visibility": room.visibility,
                 "capacity": room.capacity,
+                "players": room.PlayerCount(),
+                "members": room.MemberCount(),
                 "has_password": bool(room.password),
             }
             for room in self.server.rooms.List()
