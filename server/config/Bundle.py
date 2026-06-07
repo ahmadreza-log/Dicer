@@ -3,6 +3,7 @@ from config.Settings import Settings as Network
 from connection.Settings import Settings as Connection
 from database.Settings import Settings as Database
 from logger.Settings import Settings as Logger
+from mail.Settings import Settings as Mail
 from security.Settings import Settings as Security
 
 
@@ -38,13 +39,24 @@ class Bundle:
             "Blocked": "",
         },
         "database": {
-            "Enabled": False,
+            "Enabled": True,
             "Type": "MySQL",
             "Host": "127.0.0.1",
             "Port": 3306,
             "User": "root",
             "Password": "",
             "Name": "dicer",
+        },
+        "mail": {
+            "TestMode": True,
+            "Enabled": False,
+            "Host": "127.0.0.1",
+            "Port": 587,
+            "Username": "",
+            "Password": "",
+            "FromAddress": "noreply@dicer.local",
+            "FromName": "Dicer",
+            "UseTls": True,
         },
         "panel": {
             "Host": "127.0.0.1",
@@ -94,6 +106,17 @@ class Bundle:
                 "Password": Database.Password,
                 "Name": Database.Name,
             },
+            "mail": {
+                "TestMode": Mail.TestMode,
+                "Enabled": Mail.Enabled,
+                "Host": Mail.Host,
+                "Port": Mail.Port,
+                "Username": Mail.Username,
+                "Password": Mail.Password,
+                "FromAddress": Mail.FromAddress,
+                "FromName": Mail.FromName,
+                "UseTls": Mail.UseTls,
+            },
             "panel": {
                 "Host": Panel.Host,
                 "Port": Panel.Port,
@@ -142,6 +165,17 @@ class Bundle:
         Database.User = database.get("User", Database.User)
         Database.Password = database.get("Password", Database.Password)
         Database.Name = database.get("Name", Database.Name)
+
+        mail = data.get("mail", {})
+        Mail.TestMode = bool(mail.get("TestMode", Mail.TestMode))
+        Mail.Enabled = bool(mail.get("Enabled", Mail.Enabled))
+        Mail.Host = mail.get("Host", Mail.Host)
+        Mail.Port = int(mail.get("Port", Mail.Port))
+        Mail.Username = mail.get("Username", Mail.Username)
+        Mail.Password = mail.get("Password", Mail.Password)
+        Mail.FromAddress = mail.get("FromAddress", Mail.FromAddress)
+        Mail.FromName = mail.get("FromName", Mail.FromName)
+        Mail.UseTls = bool(mail.get("UseTls", Mail.UseTls))
 
         panel = data.get("panel", {})
         Panel.Host = panel.get("Host", Panel.Host)
