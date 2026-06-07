@@ -102,9 +102,7 @@ class Start(ctk.CTkFrame):
         )
 
     def OnCampaignSelected(self, campaign: dict) -> None:
-        campaign_id = campaign.get("id")
-
-        if campaign_id is None:
+        if not campaign.get("name"):
             self.navigator.ShowNotice(
                 Locale.t("start.error.campaign"),
                 Locale.t("start.error.invalid_campaign"),
@@ -112,52 +110,24 @@ class Start(ctk.CTkFrame):
             )
             return
 
-        self.StartDungeonMaster(campaign_id=int(campaign_id))
+        self.StartDungeonMaster(campaign)
 
     def OnCampaignCreated(self, data: dict) -> None:
-        saved, result = Session.SaveCampaign(
-            name=data["name"],
-            capacity=data["capacity"],
-            private=data["private"],
-            password=data["password"],
-        )
+        self.StartDungeonMaster(data)
 
-        if not saved or not isinstance(result, dict):
-            message = result if isinstance(result, str) else Locale.t("start.error.save")
-            self.navigator.ShowNotice(Locale.t("start.error.save"), message, success=False)
-            return
+    def RoomSettings(self, data: dict) -> dict:
+        return {
+            "name": data.get("name", ""),
+            "capacity": data.get("capacity", 6),
+            "private": bool(data.get("private", False)),
+            "password": data.get("password", ""),
+        }
 
-        campaign_id = result.get("id")
-
-        if campaign_id is None:
-            self.navigator.ShowNotice(
-                Locale.t("start.error.save"),
-                Locale.t("start.error.no_campaign_id"),
-                success=False,
-            )
-            return
-
-        self.StartDungeonMaster(campaign_id=int(campaign_id))
-
-    def StartDungeonMaster(self, campaign_id: int) -> None:
-        success, message = Session.Register("dm", campaign_id=campaign_id)
+    def StartDungeonMaster(self, campaign: dict) -> None:
+        success, message = Session.Register("dm", room=self.RoomSettings(campaign))
 
         if not success:
             self.navigator.ShowNotice(Locale.t("start.error.connection"), message, success=False)
             return
 
-        details = Locale.t("start.connected.body", role=message)
-        room = Session.room
-
-        if room:
-            campaign_name = room.get("name")
-
-            if campaign_name:
-                details += f"\n\n{Locale.t('start.connected.campaign', name=campaign_name)}"
-
-            details += (
-                f"\n\n{Locale.t('start.connected.room_id', room_id=room['id'])}\n"
-                f"{Locale.t('start.connected.share')}"
-            )
-
-        self.navigator.ShowNotice(Locale.t("start.connected.title"), details, success=True)
+        self.navigator.ShowRoom()

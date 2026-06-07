@@ -90,15 +90,27 @@ class JoinRoom(ctk.CTkFrame):
         )
         self.room_id.grid(row=0, column=0, sticky="ew", pady=(0, 10))
 
+        id_actions = ctk.CTkFrame(form, fg_color="transparent")
+        id_actions.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        id_actions.grid_columnconfigure(0, weight=1)
+
+        MenuButton(
+            id_actions,
+            icon="bolt",
+            label=Locale.t("join.paste"),
+            command=self.OnPaste,
+            variant="primary",
+        ).grid(row=0, column=0, sticky="ew")
+
         self.password = FormField(
             form,
             Locale.t("join.password"),
             Locale.t("join.password.placeholder"),
         )
-        self.password.grid(row=1, column=0, sticky="ew", pady=(0, 16))
+        self.password.grid(row=2, column=0, sticky="ew", pady=(0, 16))
 
         actions = ctk.CTkFrame(form, fg_color="transparent")
-        actions.grid(row=2, column=0, sticky="ew")
+        actions.grid(row=3, column=0, sticky="ew")
         actions.grid_columnconfigure(0, weight=1)
 
         MenuButton(
@@ -111,6 +123,15 @@ class JoinRoom(ctk.CTkFrame):
 
     def OnBack(self) -> None:
         self.navigator.ShowStart()
+
+    def OnPaste(self) -> None:
+        try:
+            value = self.winfo_toplevel().clipboard_get().strip()
+        except (ctk.TclError, AttributeError):
+            return
+
+        if value:
+            self.room_id.Set(value)
 
     def OnJoin(self) -> None:
         room_id = self.room_id.Get()
@@ -133,10 +154,4 @@ class JoinRoom(ctk.CTkFrame):
             self.navigator.ShowNotice(Locale.t("join.error.failed"), message, success=False)
             return
 
-        details = Locale.t("join.connected.body", role=message)
-        room = Session.room
-
-        if room:
-            details += f"\n\n{Locale.t('start.connected.room_id', room_id=room['id'])}"
-
-        self.navigator.ShowNotice(Locale.t("start.connected.title"), details, success=True)
+        self.navigator.ShowRoom()
