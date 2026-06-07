@@ -142,6 +142,10 @@ class Handler:
             self.HandleResendActivation(message)
             return
 
+        if message_type == "leave_room":
+            self.HandleLeaveRoom(message)
+            return
+
         self.Reply(Protocol.Error("Unknown message type."))
 
     # Registers the client role sent after connect.
@@ -281,6 +285,31 @@ class Handler:
 
         self.Reply(Protocol.ActivationSent(True))
 
+    # Leaves the current room without closing the TCP connection.
+    def HandleLeaveRoom(self, message: dict) -> None:
+        entry = self.registry.Find(self.peer)
+
+        if entry is None or not entry.room_id or not entry.registered:
+            self.Reply(Protocol.LeftRoom(False, error="Not in a room."))
+            return
+
+        room_id = entry.room_id
+        role = entry.role
+
+        if role == "dm":
+            self._DismissRoom(room_id)
+            self.registry.LeaveSession(self.peer)
+            self.Reply(Protocol.LeftRoom(True))
+            return
+
+        if role in ("adventure", "watch"):
+            self.rooms.Leave(self.peer)
+            self.registry.LeaveSession(self.peer)
+            self.Reply(Protocol.LeftRoom(True))
+            return
+
+        self.Reply(Protocol.LeftRoom(False, error="Not in a room."))
+
     # Creates a room owned by a Dungeon Master connection.
     def _RegisterDungeonMaster(self, message: dict) -> tuple[bool, str, dict | None]:
         user_id = Protocol.ParseUserId(message)
@@ -305,6 +334,14 @@ class Handler:
             if campaign is None:
                 return False, "Campaign not found.", None
 
+            if campaign.get("room_id"):
+                return False, "This campaign already has an active room.", None
+
+            active = self.rooms.FindByCampaignId(resolved_id)
+
+            if active is not None:
+                return False, "This campaign already has an active room.", None
+
             campaign_name = campaign["name"]
             stored_campaign_id = campaign["id"]
             visibility = "private" if campaign["private"] else "public"
@@ -326,10 +363,25 @@ class Handler:
             campaign_id=stored_campaign_id,
         )
 
+        if stored_campaign_id is not None and user_id is not None:
+            assigned, assign_reason = Campaigns.AssignRoom(
+                stored_campaign_id,
+                user_id,
+                room.id,
+            )
+
+            if not assigned:
+                self.rooms.Remove(room.id)
+                return False, assign_reason, None
+
         success, reason = self.registry.Register(self.peer, "dm")
 
         if not success:
             self.rooms.Remove(room.id)
+
+            if stored_campaign_id is not None:
+                Campaigns.ClearRoom(stored_campaign_id)
+
             return False, reason, None
 
         entry = self.registry.Find(self.peer)
@@ -372,6 +424,44 @@ class Handler:
         )
         return True, "", room.ToDict()
 
+    # Closes a room and disconnects every member when the DM leaves.
+    def _DismissRoom(self, room_id: str) -> None:
+        room = self.rooms.Get(room_id)
+
+        if room is None:
+            return
+
+        campaign_id = room.campaign_id
+        member_peers = list(room.members.keys())
+        self.rooms.Remove(room_id)
+
+        if campaign_id is not None:
+            Campaigns.ClearRoom(campaign_id)
+
+        reason = "The Dungeon Master left and the room was closed."
+
+        for peer in member_peers:
+            if peer is self.peer:
+                continue
+
+            self._KickPeer(peer, reason)
+
+        self._LogActivity(f"Room {room_id} closed")
+
+    # Notifies a client and closes its socket.
+    def _KickPeer(self, peer: socket.socket, reason: str) -> None:
+        try:
+            peer.sendall(Protocol.Encode(Protocol.RoomClosed(reason)) + b"\n")
+        except OSError:
+            pass
+
+        self.registry.Remove(peer)
+
+        try:
+            peer.close()
+        except OSError:
+            pass
+
     # Writes to the dashboard activity feed when the panel is active.
     def _LogActivity(self, message: str) -> None:
         try:
@@ -399,7 +489,7 @@ class Handler:
 
         if entry is not None and entry.room_id:
             if entry.role == "dm":
-                self.rooms.Remove(entry.room_id)
+                self._DismissRoom(entry.room_id)
             else:
                 self.rooms.Leave(self.peer)
 

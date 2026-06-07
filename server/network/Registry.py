@@ -96,6 +96,27 @@ class Registry:
         )
         return True, ""
 
+    # Clears an in-room session while keeping the TCP connection open.
+    def LeaveSession(self, peer: socket.socket) -> bool:
+        with self.lock:
+            entry = None
+
+            for item in self.entries:
+                if item.peer is peer:
+                    entry = item
+                    break
+
+            if entry is None or not entry.room_id:
+                return False
+
+            entry.role = Entry.DefaultRole
+            entry.room_id = None
+            entry.registered = False
+            address = entry.address
+
+        self.logger.info("Client left room session | address=%s", address)
+        return True
+
     # Closes every registered client and clears the list during shutdown.
     def CloseAll(self) -> None:
         with self.lock:

@@ -109,6 +109,24 @@ class Protocol:
         return message
 
     @classmethod
+    def LeftRoom(cls, ok: bool, error: str = "") -> dict:
+        message = {"type": "left_room", "ok": ok}
+
+        if error:
+            message["error"] = error
+
+        return message
+
+    @classmethod
+    def RoomClosed(cls, reason: str = "") -> dict:
+        message = {"type": "room_closed", "ok": True}
+
+        if reason:
+            message["reason"] = reason
+
+        return message
+
+    @classmethod
     def ParseLogin(cls, message: dict) -> tuple[str, str]:
         login = str(message.get("login", message.get("username", ""))).strip()
         password = str(message.get("password", ""))
