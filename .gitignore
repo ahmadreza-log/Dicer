@@ -30,6 +30,8 @@ ENV/
 server/logs/
 *.log
 *.log.*
+# Test mail output (also under server/logs/ when present)
+**/test-mail.log
 
 # 🔐 Secrets and local config
 .env

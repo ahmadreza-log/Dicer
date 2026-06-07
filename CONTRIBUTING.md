@@ -28,10 +28,20 @@ venv\Scripts\activate
 # Linux / macOS
 source venv/bin/activate
 
-# Run the server
+# Run the server (CLI panel)
 cd server
 python main.py
+
+# Or web dashboard + auto-start TCP
+cd server
+python main.py --dash
+
+# Run the client (separate terminal)
+cd client
+python main.py
 ```
+
+Local settings are written to `server/config/stored.json` and `client/stored.json` — both are **gitignored**. Mail **test mode** (Dash → Mail) is enough for registration without SMTP.
 
 ---
 
@@ -39,14 +49,20 @@ python main.py
 
 ```
 Dicer/
-├── server/          # 🖥️ Central TCP server (active development)
-│   ├── config/      # Default settings
-│   ├── cli/         # Command-line arguments
-│   ├── network/     # Socket server, handlers, registry
-│   ├── hooks/       # Shutdown and lifecycle hooks
-│   └── logger/      # Logging system
-├── client/          # 📱 Client app (planned)
-└── docs/            # 📚 Additional documentation (if added)
+├── server/          # Central TCP server, Dash board, MySQL, mail
+│   ├── config/      # Defaults and stored.json (local)
+│   ├── cli/         # CLI panel and Manager
+│   ├── board/       # Plotly Dash dashboard
+│   ├── network/     # Socket server, handlers, protocol
+│   ├── database/    # Users, campaigns, activation codes
+│   ├── mail/        # SMTP and test-mode sender
+│   ├── room/        # In-memory game rooms
+│   └── logger/
+├── client/          # CustomTkinter GUI (auth, rooms, i18n)
+│   ├── screens/
+│   ├── network/
+│   └── i18n/
+└── docs/            # Additional documentation (if added)
 ```
 
 ---
