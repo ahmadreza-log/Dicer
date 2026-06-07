@@ -566,8 +566,9 @@ class Callbacks:
     @classmethod
     def BuildChart(cls):
         figure = go.Figure()
-        times = [point["time"] for point in Bridge.history]
-        counts = [point["clients"] for point in Bridge.history]
+        recent = Bridge.history[-10:]
+        times = [point["time"] for point in recent]
+        counts = [point["clients"] for point in recent]
 
         figure.add_trace(
             go.Scatter(

@@ -164,6 +164,25 @@ class Session:
         return True, "Verification code sent."
 
     @classmethod
+    def EnsurePresence(cls) -> tuple[bool, str]:
+        if cls.role in Protocol.ValidRoles:
+            if not cls.running:
+                cls.StartListen()
+            return True, ""
+
+        if cls.IsConnected() and cls.running:
+            return True, ""
+
+        if not cls.IsConnected():
+            success, message = cls.Connect()
+
+            if not success:
+                return False, message
+
+        cls.StartListen()
+        return True, ""
+
+    @classmethod
     def Register(
         cls,
         role: str,

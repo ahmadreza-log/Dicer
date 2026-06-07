@@ -10,7 +10,7 @@ class Bridge:
 
     manager: Manager | None = None
     history: list[dict] = []
-    limit = 60
+    limit = 10
     alert = ""
     activities: list[dict] = []
 

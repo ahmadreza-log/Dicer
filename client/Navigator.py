@@ -13,6 +13,7 @@ from screens.VerifyEmail import VerifyEmail
 
 
 from Store import Store
+from network.Session import Session
 
 
 class Navigator:
@@ -94,6 +95,7 @@ class Navigator:
 
     def ShowMenu(self) -> None:
         self.current = "menu"
+        Session.EnsurePresence()
         self.shell.Show(self.menu)
 
     def ShowStart(self) -> None:
