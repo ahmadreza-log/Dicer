@@ -1,5 +1,4 @@
 import json
-import uuid
 from pathlib import Path
 
 from Settings import Settings
@@ -9,8 +8,11 @@ class Store:
     # Persists client settings to a JSON file beside the client entry point.
 
     Filename = "stored.json"
-    OwnerId = ""
     LocaleCode = "en"
+    UserId = 0
+    Username = ""
+    Email = ""
+    Active = False
 
     @classmethod
     def Path(cls) -> Path:
@@ -35,23 +37,24 @@ class Store:
         network = data.get("network", {})
         Settings.ApplyHost(str(network.get("Host", Settings.Host)))
 
-        owner_id = str(data.get("owner_id", "")).strip()
-
-        if owner_id:
-            cls.OwnerId = owner_id
-        else:
-            cls.OwnerId = uuid.uuid4().hex
-
         cls.LocaleCode = str(data.get("locale", cls.LocaleCode)).strip() or cls.LocaleCode
+
+        user = data.get("user", {})
+        cls.UserId = int(user.get("id", 0) or 0)
+        cls.Username = str(user.get("username", "")).strip()
+        cls.Email = str(user.get("email", "")).strip()
+        cls.Active = bool(user.get("active", user.get("email_verified", False)))
 
     @classmethod
     def Snapshot(cls) -> dict:
-        if not cls.OwnerId:
-            cls.OwnerId = uuid.uuid4().hex
-
         return {
-            "owner_id": cls.OwnerId,
             "locale": cls.LocaleCode,
+            "user": {
+                "id": cls.UserId,
+                "username": cls.Username,
+                "email": cls.Email,
+                "active": cls.Active,
+            },
             "network": {
                 "Host": Settings.Host,
             },
@@ -73,4 +76,12 @@ class Store:
     @classmethod
     def SaveLocale(cls, code: str) -> tuple[bool, str]:
         cls.LocaleCode = code
+        return cls.Save()
+
+    @classmethod
+    def SaveUser(cls, user: dict) -> tuple[bool, str]:
+        cls.UserId = int(user.get("id", 0) or 0)
+        cls.Username = str(user.get("username", "")).strip()
+        cls.Email = str(user.get("email", "")).strip()
+        cls.Active = bool(user.get("active", user.get("email_verified", False)))
         return cls.Save()

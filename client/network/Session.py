@@ -53,61 +53,6 @@ class Session:
             peer.close()
             return False, str(error)
 
-import socket
-import threading
-
-from Settings import Settings
-from network.Protocol import Protocol
-
-
-class Session:
-    # Persistent TCP connection to the central server.
-
-    peer: socket.socket | None = None
-    role: str | None = None
-    room: dict | None = None
-    thread: threading.Thread | None = None
-    running = False
-    _buffer = ""
-    _lock = threading.Lock()
-
-    @classmethod
-    def IsConnected(cls) -> bool:
-        return cls.peer is not None
-
-    @classmethod
-    def Connect(cls) -> tuple[bool, str]:
-        if cls.IsConnected():
-            return True, "Already connected to server."
-
-        cls.Disconnect()
-        cls._buffer = ""
-
-        try:
-            peer = socket.create_connection(
-                (Settings.Host, Settings.Port),
-                timeout=Settings.Timeout,
-            )
-        except OSError as error:
-            return False, f"Could not connect to {Settings.Host}:{Settings.Port}. {error}"
-
-        try:
-            peer.settimeout(Settings.Timeout)
-            welcome = cls.ReadLine(peer)
-
-            if not welcome:
-                peer.close()
-                return False, "Server closed the connection."
-
-            peer.settimeout(None)
-            cls.peer = peer
-            cls.role = Protocol.DefaultRole
-            return True, welcome
-
-        except OSError as error:
-            peer.close()
-            return False, str(error)
-
     @classmethod
     def Request(cls, payload: bytes) -> tuple[bool, dict | str]:
         if not cls.IsConnected():
@@ -166,6 +111,57 @@ class Session:
             return False, "Campaign was not saved."
 
         return True, campaign
+
+    @classmethod
+    def LoginUser(cls, login: str, password: str) -> tuple[bool, dict | str]:
+        success, payload = cls.Request(Protocol.LoginUser(login, password))
+
+        if not success:
+            return False, payload if isinstance(payload, str) else "Request failed."
+
+        user = payload.get("user")
+
+        if not isinstance(user, dict):
+            return False, "Sign in failed."
+
+        return True, user
+
+    @classmethod
+    def RegisterUser(cls, username: str, email: str, password: str) -> tuple[bool, dict | str]:
+        success, payload = cls.Request(Protocol.RegisterUser(username, email, password))
+
+        if not success:
+            return False, payload if isinstance(payload, str) else "Request failed."
+
+        user = payload.get("user")
+
+        if not isinstance(user, dict):
+            return False, "Registration failed."
+
+        return True, user
+
+    @classmethod
+    def VerifyEmail(cls, user_id: int, code: str) -> tuple[bool, dict | str]:
+        success, payload = cls.Request(Protocol.VerifyEmail(user_id, code))
+
+        if not success:
+            return False, payload if isinstance(payload, str) else "Request failed."
+
+        user = payload.get("user")
+
+        if not isinstance(user, dict):
+            return False, "Verification failed."
+
+        return True, user
+
+    @classmethod
+    def ResendActivation(cls, user_id: int) -> tuple[bool, str]:
+        success, payload = cls.Request(Protocol.ResendActivation(user_id))
+
+        if not success:
+            return False, payload if isinstance(payload, str) else "Request failed."
+
+        return True, "Verification code sent."
 
     @classmethod
     def Register(

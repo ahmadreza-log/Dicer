@@ -52,7 +52,7 @@ class SectionTitle(ctk.CTkFrame):
 class FormField(ctk.CTkFrame):
     # Label + input pair used on settings forms.
 
-    def __init__(self, master, label: str, placeholder: str = "", **kwargs) -> None:
+    def __init__(self, master, label: str, placeholder: str = "", show: str | None = None, **kwargs) -> None:
         super().__init__(master, fg_color="transparent", **kwargs)
 
         self.grid_columnconfigure(0, weight=1)
@@ -64,6 +64,11 @@ class FormField(ctk.CTkFrame):
             text_color=Theme.TextMuted,
         ).grid(row=0, column=0, sticky=Layout.Sticky(), pady=(0, 6))
 
+        entry_kwargs = {}
+
+        if show is not None:
+            entry_kwargs["show"] = show
+
         self.input = ctk.CTkEntry(
             self,
             placeholder_text=placeholder,
@@ -73,6 +78,7 @@ class FormField(ctk.CTkFrame):
             fg_color=Theme.SurfaceRaised,
             font=Fonts.Body(),
             justify=Layout.Justify(),
+            **entry_kwargs,
         )
         self.input.grid(row=1, column=0, sticky="ew")
 

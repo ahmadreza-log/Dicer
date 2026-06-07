@@ -20,10 +20,19 @@ class Protocol:
         return json.dumps(payload, separators=(",", ":")).encode("utf-8") + b"\n"
 
     @classmethod
+    def _UserPayload(cls) -> dict:
+        payload: dict = {}
+
+        if Store.UserId:
+            payload["user_id"] = Store.UserId
+
+        return payload
+
+    @classmethod
     def ListCampaigns(cls) -> bytes:
         payload = {
             "type": "list_campaigns",
-            "owner_id": Store.OwnerId,
+            **_UserPayload(),
         }
         return cls.Encode(payload)
 
@@ -31,11 +40,47 @@ class Protocol:
     def SaveCampaign(cls, name: str, capacity: int, private: bool, password: str) -> bytes:
         payload = {
             "type": "save_campaign",
-            "owner_id": Store.OwnerId,
             "name": name,
             "capacity": capacity,
             "private": private,
             "password": password,
+            **_UserPayload(),
+        }
+        return cls.Encode(payload)
+
+    @classmethod
+    def LoginUser(cls, login: str, password: str) -> bytes:
+        payload = {
+            "type": "login_user",
+            "login": login,
+            "password": password,
+        }
+        return cls.Encode(payload)
+
+    @classmethod
+    def RegisterUser(cls, username: str, email: str, password: str) -> bytes:
+        payload = {
+            "type": "register_user",
+            "username": username,
+            "email": email,
+            "password": password,
+        }
+        return cls.Encode(payload)
+
+    @classmethod
+    def VerifyEmail(cls, user_id: int, code: str) -> bytes:
+        payload = {
+            "type": "verify_email",
+            "user_id": user_id,
+            "code": code,
+        }
+        return cls.Encode(payload)
+
+    @classmethod
+    def ResendActivation(cls, user_id: int) -> bytes:
+        payload = {
+            "type": "resend_activation",
+            "user_id": user_id,
         }
         return cls.Encode(payload)
 
@@ -51,7 +96,7 @@ class Protocol:
         payload: dict = {
             "type": "register",
             "role": role,
-            "owner_id": Store.OwnerId,
+            **_UserPayload(),
         }
 
         if role == "dm":

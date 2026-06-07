@@ -12,6 +12,7 @@ class SettingsMenu(ctk.CTkFrame):
 
     Items = (
         ("house", "settings.network", "settings.network.hint", "OnNetwork"),
+        ("people", "settings.account", "settings.account.hint", "OnAccount"),
         ("bolt", "settings.language", "settings.language.hint", "OnLanguage"),
     )
 
@@ -68,6 +69,9 @@ class SettingsMenu(ctk.CTkFrame):
 
     def OnNetwork(self) -> None:
         self.navigator.ShowNetwork()
+
+    def OnAccount(self) -> None:
+        self.navigator.ShowAccount()
 
     def OnLanguage(self) -> None:
         self.navigator.ShowLanguage()

@@ -77,4 +77,8 @@ class Notice(ctk.CTkFrame):
         ).grid(row=0, column=0, sticky="ew")
 
     def OnBack(self) -> None:
-        self.navigator.ShowMenu()
+        if self.navigator.IsAuthenticated():
+            self.navigator.ShowMenu()
+            return
+
+        self.navigator.ShowInitialScreen()
