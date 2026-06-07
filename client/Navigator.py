@@ -1,3 +1,5 @@
+from screens.JoinRoom import JoinRoom
+from screens.Language import Language
 from screens.MainMenu import MainMenu
 from screens.Network import Network
 from screens.Notice import Notice
@@ -8,25 +10,79 @@ from screens.Start import Start
 class Navigator:
     # Routes between client screens inside the shared shell container.
 
-    def __init__(self, shell) -> None:
+    def __init__(self, shell, on_locale_change=None) -> None:
         self.shell = shell
-        self.menu = MainMenu(shell.stage, self)
-        self.start = Start(shell.stage, self)
-        self.settings = SettingsMenu(shell.stage, self)
-        self.network = Network(shell.stage, self)
+        self.on_locale_change = on_locale_change
+        self.current = "menu"
+        self.join_role = "adventure"
         self.notice: Notice | None = None
+        self.BuildScreens()
         self.ShowMenu()
 
+    def BuildScreens(self) -> None:
+        self.menu = MainMenu(self.shell.stage, self)
+        self.start = Start(self.shell.stage, self)
+        self.join = JoinRoom(self.shell.stage, self)
+        self.settings = SettingsMenu(self.shell.stage, self)
+        self.language = Language(self.shell.stage, self)
+        self.network = Network(self.shell.stage, self)
+
+    def ReloadScreens(self) -> None:
+        current = self.current
+
+        self.shell.ClearActive()
+
+        for screen in (
+            self.menu,
+            self.start,
+            self.join,
+            self.settings,
+            self.language,
+            self.network,
+        ):
+            screen.destroy()
+
+        if self.notice is not None:
+            self.notice.destroy()
+            self.notice = None
+
+        self.BuildScreens()
+
+        routes = {
+            "menu": self.ShowMenu,
+            "start": self.ShowStart,
+            "join": lambda: self.ShowJoinRoom(self.join_role),
+            "settings": self.ShowSettings,
+            "language": self.ShowLanguage,
+            "network": self.ShowNetwork,
+        }
+        routes.get(current, self.ShowMenu)()
+
     def ShowMenu(self) -> None:
+        self.current = "menu"
         self.shell.Show(self.menu)
 
     def ShowStart(self) -> None:
+        self.current = "start"
         self.shell.Show(self.start)
 
+    def ShowJoinRoom(self, role: str) -> None:
+        self.current = "join"
+        self.join_role = role
+        self.join.Prepare(role)
+        self.shell.Show(self.join)
+
     def ShowSettings(self) -> None:
+        self.current = "settings"
         self.shell.Show(self.settings)
 
+    def ShowLanguage(self) -> None:
+        self.current = "language"
+        self.language.LoadFields()
+        self.shell.Show(self.language)
+
     def ShowNetwork(self) -> None:
+        self.current = "network"
         self.network.LoadFields()
         self.shell.Show(self.network)
 

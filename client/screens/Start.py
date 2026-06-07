@@ -1,6 +1,10 @@
 import customtkinter as ctk
 
+from dialogs.CampaignForm import CampaignForm
+from dialogs.CampaignPicker import CampaignPicker
 from Fonts import Fonts
+from i18n.Locale import Locale
+from Layout import Layout
 from network.Session import Session
 from Theme import Theme
 from Widgets import BackButton, RoleButton, SectionTitle
@@ -10,9 +14,9 @@ class Start(ctk.CTkFrame):
     # Role selection shown after the user presses Start on the main menu.
 
     Roles = (
-        ("shield", "I am a ", "Dungeon Master", "dm"),
-        ("swords", "I want an ", "Adventure", "adventure"),
-        ("eye", "I just want to ", "Watch", "watch"),
+        ("shield", "start.role.dm.prefix", "start.role.dm.highlight", "dm"),
+        ("swords", "start.role.adventure.prefix", "start.role.adventure.highlight", "adventure"),
+        ("eye", "start.role.watch.prefix", "start.role.watch.highlight", "watch"),
     )
 
     def __init__(self, master, navigator, **kwargs) -> None:
@@ -31,20 +35,19 @@ class Start(ctk.CTkFrame):
         header.grid(row=0, column=0, sticky="ew")
         header.grid_columnconfigure(1, weight=1)
 
-        BackButton(header, command=self.OnBack).grid(row=0, column=0, sticky="w")
-
+        back = BackButton(header, command=self.OnBack)
         titles = ctk.CTkFrame(header, fg_color="transparent")
-        titles.grid(row=0, column=1, sticky="w", padx=(16, 0))
         titles.grid_columnconfigure(0, weight=1)
+        Layout.PlaceScreenHeader(back, titles)
 
-        SectionTitle(titles, "play", "Start").grid(row=0, column=0, sticky="w")
+        SectionTitle(titles, "play", Locale.t("start.title")).grid(row=0, column=0, sticky=Layout.Sticky())
 
-        ctk.CTkLabel(
+        Layout.Label(
             titles,
-            text="How do you want to join the session?",
+            text=Locale.t("start.subtitle"),
             font=Fonts.Caption(),
             text_color=Theme.TextDim,
-        ).grid(row=1, column=0, sticky="w", pady=(6, 0))
+        ).grid(row=1, column=0, sticky=Layout.Sticky(), pady=(6, 0))
 
         divider = ctk.CTkFrame(self, height=1, fg_color=Theme.BorderSoft)
         divider.grid(row=1, column=0, sticky="ew", pady=(18, 0))
@@ -55,12 +58,12 @@ class Start(ctk.CTkFrame):
         panel.grid(row=2, column=0, sticky="nsew", pady=(20, 0))
         panel.grid_columnconfigure(0, weight=1)
 
-        for row, (icon, prefix, highlight, role) in enumerate(self.Roles):
+        for row, (icon, prefix_key, highlight_key, role) in enumerate(self.Roles):
             RoleButton(
                 panel,
                 icon=icon,
-                prefix=prefix,
-                highlight=highlight,
+                prefix=Locale.t(prefix_key),
+                highlight=Locale.t(highlight_key),
                 command=lambda value=role: self.OnRole(value),
             ).grid(row=row, column=0, sticky="ew", pady=6)
 
@@ -68,30 +71,93 @@ class Start(ctk.CTkFrame):
         self.navigator.ShowMenu()
 
     def OnRole(self, role: str) -> None:
+        if role in ("adventure", "watch"):
+            self.navigator.ShowJoinRoom(role)
+            return
+
         if role != "dm":
             return
 
-        success, message = Session.Register(role)
+        self.OpenCampaignFlow()
 
-        if success:
-            details = (
-                f"You are registered as {message}.\n"
-                "The socket stays open until you close the client."
-            )
+    def OpenCampaignFlow(self) -> None:
+        success, result = Session.ListCampaigns()
+        campaigns = result if success and isinstance(result, list) else []
 
-            room = Session.room
-
-            if room:
-                details += (
-                    f"\n\nRoom ID: {room['id']}\n"
-                    "Share this ID so players can join your session."
-                )
-
-            self.navigator.ShowNotice(
-                "Connected",
-                details,
-                success=True,
+        if campaigns:
+            CampaignPicker(
+                self.winfo_toplevel(),
+                campaigns,
+                on_select=self.OnCampaignSelected,
+                on_create=self.OpenCampaignForm,
             )
             return
 
-        self.navigator.ShowNotice("Connection Failed", message, success=False)
+        self.OpenCampaignForm()
+
+    def OpenCampaignForm(self) -> None:
+        CampaignForm(
+            self.winfo_toplevel(),
+            on_submit=self.OnCampaignCreated,
+        )
+
+    def OnCampaignSelected(self, campaign: dict) -> None:
+        campaign_id = campaign.get("id")
+
+        if campaign_id is None:
+            self.navigator.ShowNotice(
+                Locale.t("start.error.campaign"),
+                Locale.t("start.error.invalid_campaign"),
+                success=False,
+            )
+            return
+
+        self.StartDungeonMaster(campaign_id=int(campaign_id))
+
+    def OnCampaignCreated(self, data: dict) -> None:
+        saved, result = Session.SaveCampaign(
+            name=data["name"],
+            capacity=data["capacity"],
+            private=data["private"],
+            password=data["password"],
+        )
+
+        if not saved or not isinstance(result, dict):
+            message = result if isinstance(result, str) else Locale.t("start.error.save")
+            self.navigator.ShowNotice(Locale.t("start.error.save"), message, success=False)
+            return
+
+        campaign_id = result.get("id")
+
+        if campaign_id is None:
+            self.navigator.ShowNotice(
+                Locale.t("start.error.save"),
+                Locale.t("start.error.no_campaign_id"),
+                success=False,
+            )
+            return
+
+        self.StartDungeonMaster(campaign_id=int(campaign_id))
+
+    def StartDungeonMaster(self, campaign_id: int) -> None:
+        success, message = Session.Register("dm", campaign_id=campaign_id)
+
+        if not success:
+            self.navigator.ShowNotice(Locale.t("start.error.connection"), message, success=False)
+            return
+
+        details = Locale.t("start.connected.body", role=message)
+        room = Session.room
+
+        if room:
+            campaign_name = room.get("name")
+
+            if campaign_name:
+                details += f"\n\n{Locale.t('start.connected.campaign', name=campaign_name)}"
+
+            details += (
+                f"\n\n{Locale.t('start.connected.room_id', room_id=room['id'])}\n"
+                f"{Locale.t('start.connected.share')}"
+            )
+
+        self.navigator.ShowNotice(Locale.t("start.connected.title"), details, success=True)
