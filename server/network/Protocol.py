@@ -67,8 +67,86 @@ class Protocol:
         return message
 
     @classmethod
-    def ParseOwner(cls, message: dict) -> str:
-        return str(message.get("owner_id", "")).strip()
+    def UserLoggedIn(cls, ok: bool, user: dict | None = None, error: str = "") -> dict:
+        message = {"type": "user_logged_in", "ok": ok}
+
+        if ok and user:
+            message["user"] = user
+        elif error:
+            message["error"] = error
+
+        return message
+
+    @classmethod
+    def UserRegistered(cls, ok: bool, user: dict | None = None, error: str = "") -> dict:
+        message = {"type": "user_registered", "ok": ok}
+
+        if ok and user:
+            message["user"] = user
+        elif error:
+            message["error"] = error
+
+        return message
+
+    @classmethod
+    def EmailVerified(cls, ok: bool, user: dict | None = None, error: str = "") -> dict:
+        message = {"type": "email_verified", "ok": ok}
+
+        if ok and user:
+            message["user"] = user
+        elif error:
+            message["error"] = error
+
+        return message
+
+    @classmethod
+    def ActivationSent(cls, ok: bool, error: str = "") -> dict:
+        message = {"type": "activation_sent", "ok": ok}
+
+        if error:
+            message["error"] = error
+
+        return message
+
+    @classmethod
+    def ParseLogin(cls, message: dict) -> tuple[str, str]:
+        login = str(message.get("login", message.get("username", ""))).strip()
+        password = str(message.get("password", ""))
+        return login, password
+
+    @classmethod
+    def ParseCredentials(cls, message: dict) -> tuple[str, str, str]:
+        username = str(message.get("username", "")).strip()
+        email = str(message.get("email", "")).strip().lower()
+        password = str(message.get("password", ""))
+        return username, email, password
+
+    @classmethod
+    def ParseUserId(cls, message: dict) -> int | None:
+        value = message.get("user_id")
+
+        try:
+            resolved = int(value)
+        except (TypeError, ValueError):
+            return None
+
+        return resolved if resolved > 0 else None
+
+    @classmethod
+    def ParseVerificationCode(cls, message: dict) -> str:
+        return str(message.get("code", "")).strip()
+
+    @classmethod
+    def PublicUser(cls, user: dict | None) -> dict | None:
+        if user is None:
+            return None
+
+        return {
+            "id": user["id"],
+            "username": user.get("username", ""),
+            "email": user.get("email", ""),
+            "active": bool(user.get("active")),
+        }
 
     @classmethod
     def ParseCampaignForm(cls, message: dict) -> tuple[str, int, bool, str]:

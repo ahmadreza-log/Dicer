@@ -3,6 +3,7 @@ from collections.abc import Callable
 
 from connection.Settings import Settings as Connection
 from database.campaigns.Repository import Repository as Campaigns
+from database.users.Repository import Repository as Users
 from logger.Logger import Logger
 from network.Entry import Entry
 from network.Protocol import Protocol
@@ -125,6 +126,22 @@ class Handler:
             self.HandleSaveCampaign(message)
             return
 
+        if message_type == "register_user":
+            self.HandleRegisterUser(message)
+            return
+
+        if message_type == "login_user":
+            self.HandleLoginUser(message)
+            return
+
+        if message_type == "verify_email":
+            self.HandleVerifyEmail(message)
+            return
+
+        if message_type == "resend_activation":
+            self.HandleResendActivation(message)
+            return
+
         self.Reply(Protocol.Error("Unknown message type."))
 
     # Registers the client role sent after connect.
@@ -152,13 +169,13 @@ class Handler:
 
     # Returns saved campaigns for the requesting client owner.
     def HandleListCampaigns(self, message: dict) -> None:
-        owner_id = Protocol.ParseOwner(message)
+        user_id = Protocol.ParseUserId(message)
 
-        if not owner_id:
-            self.Reply(Protocol.Campaigns(False, error="Owner ID is required."))
+        if user_id is None:
+            self.Reply(Protocol.Campaigns(False, error="User id is required."))
             return
 
-        success, reason, items = Campaigns.ListByOwner(owner_id)
+        success, reason, items = Campaigns.ListByUser(user_id)
 
         if not success:
             self.Reply(Protocol.Campaigns(False, error=reason))
@@ -168,10 +185,10 @@ class Handler:
 
     # Persists a new campaign template for later reuse.
     def HandleSaveCampaign(self, message: dict) -> None:
-        owner_id = Protocol.ParseOwner(message)
+        user_id = Protocol.ParseUserId(message)
 
-        if not owner_id:
-            self.Reply(Protocol.CampaignSaved(False, error="Owner ID is required."))
+        if user_id is None:
+            self.Reply(Protocol.CampaignSaved(False, error="User id is required."))
             return
 
         name, capacity, is_private, password = Protocol.ParseCampaignForm(message)
@@ -185,7 +202,7 @@ class Handler:
             return
 
         success, reason, campaign = Campaigns.Save(
-            owner_id=owner_id,
+            user_id=user_id,
             name=name,
             capacity=capacity,
             is_private=is_private,
@@ -204,9 +221,69 @@ class Handler:
         }
         self.Reply(Protocol.CampaignSaved(True, campaign=public_campaign))
 
+    # Authenticates a registered account by username or email.
+    def HandleLoginUser(self, message: dict) -> None:
+        login, password = Protocol.ParseLogin(message)
+
+        if not login or not password:
+            self.Reply(Protocol.UserLoggedIn(False, error="Username and password are required."))
+            return
+
+        success, reason, user = Users.Authenticate(login, password)
+
+        if not success or user is None:
+            self.Reply(Protocol.UserLoggedIn(False, error=reason))
+            return
+
+        self.Reply(Protocol.UserLoggedIn(True, user=Protocol.PublicUser(user)))
+
+    # Creates a registered account and emails a verification code.
+    def HandleRegisterUser(self, message: dict) -> None:
+        username, email, password = Protocol.ParseCredentials(message)
+        success, reason, user = Users.Register(username, email, password)
+
+        if not success or user is None:
+            self.Reply(Protocol.UserRegistered(False, error=reason))
+            return
+
+        self.Reply(Protocol.UserRegistered(True, user=Protocol.PublicUser(user)))
+
+    # Verifies a user's email with a 6-digit activation code.
+    def HandleVerifyEmail(self, message: dict) -> None:
+        user_id = Protocol.ParseUserId(message)
+        code = Protocol.ParseVerificationCode(message)
+
+        if user_id is None:
+            self.Reply(Protocol.EmailVerified(False, error="User id is required."))
+            return
+
+        success, reason, user = Users.VerifyEmail(user_id, code)
+
+        if not success or user is None:
+            self.Reply(Protocol.EmailVerified(False, error=reason))
+            return
+
+        self.Reply(Protocol.EmailVerified(True, user=Protocol.PublicUser(user)))
+
+    # Sends a fresh activation code to the user's email.
+    def HandleResendActivation(self, message: dict) -> None:
+        user_id = Protocol.ParseUserId(message)
+
+        if user_id is None:
+            self.Reply(Protocol.ActivationSent(False, error="User id is required."))
+            return
+
+        success, reason = Users.ResendActivation(user_id)
+
+        if not success:
+            self.Reply(Protocol.ActivationSent(False, error=reason))
+            return
+
+        self.Reply(Protocol.ActivationSent(True))
+
     # Creates a room owned by a Dungeon Master connection.
     def _RegisterDungeonMaster(self, message: dict) -> tuple[bool, str, dict | None]:
-        owner_id = Protocol.ParseOwner(message)
+        user_id = Protocol.ParseUserId(message)
         campaign_id = message.get("campaign_id")
         campaign_name = ""
         stored_campaign_id = None
@@ -215,15 +292,15 @@ class Handler:
         capacity = None
 
         if campaign_id is not None:
-            if not owner_id:
-                return False, "Owner ID is required.", None
+            if user_id is None:
+                return False, "User id is required.", None
 
             try:
                 resolved_id = int(campaign_id)
             except (TypeError, ValueError):
                 return False, "Invalid campaign ID.", None
 
-            campaign = Campaigns.Get(resolved_id, owner_id)
+            campaign = Campaigns.Get(resolved_id, user_id)
 
             if campaign is None:
                 return False, "Campaign not found.", None
