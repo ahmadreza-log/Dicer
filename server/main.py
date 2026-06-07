@@ -38,8 +38,11 @@ def RunHeadless(arguments, logger) -> None:
     )
 
     if Database.Enabled:
-        success, message = Engine.Connect()
+        success, message = Engine.EnsureConnected()
         logger.info("Database connect | success=%s | message=%s", success, message)
+
+        if not success:
+            logger.error("Server starting without database: %s", message)
 
     server = Server(host=host, port=port)
 

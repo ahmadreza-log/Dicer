@@ -2,6 +2,8 @@ import time
 
 from config.Settings import ResolveHost
 from config.Settings import Settings as Network
+from database.Engine import Engine
+from database.Settings import Settings as Database
 from network.Server import Server
 
 
@@ -27,6 +29,12 @@ class Manager:
     def Start(self) -> tuple[bool, str]:
         if self.IsActive():
             return False, "Server is already running."
+
+        if Database.Enabled:
+            success, message = Engine.EnsureConnected()
+
+            if not success:
+                return False, f"Could not start server. {message}"
 
         self.server = Server(host=self.host, port=self.port)
         self.server.Launch()

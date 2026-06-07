@@ -4,7 +4,7 @@
 
 class Settings:
     # Master switch for database connectivity.
-    Enabled = False
+    Enabled = True
 
     # Database engine type (MySQL only for now).
     Type = "MySQL"

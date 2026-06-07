@@ -41,6 +41,29 @@ class Driver(Base):
                 f"Connected to MySQL at {Settings.Host}:{Settings.Port}/{Settings.Name}"
             )
         except error_type as error:
+            if self._IsMissingDatabase(error):
+                created, create_message = self._CreateDatabase(connector, error_type)
+
+                if not created:
+                    self.link = None
+                    return False, create_message
+
+                try:
+                    self.link = connector.connect(
+                        host=Settings.Host,
+                        port=Settings.Port,
+                        user=Settings.User,
+                        password=Settings.Password,
+                        database=Settings.Name,
+                    )
+                    return True, (
+                        f"Created and connected to MySQL database '{Settings.Name}' "
+                        f"at {Settings.Host}:{Settings.Port}"
+                    )
+                except error_type as retry_error:
+                    self.link = None
+                    return False, f"MySQL connection failed. Reason: {retry_error}"
+
             self.link = None
             return False, f"MySQL connection failed. Reason: {error}"
 
@@ -51,7 +74,7 @@ class Driver(Base):
 
         self.link = None
 
-    # Verifies server access and whether the configured database exists.
+    # Verifies server access and creates the schema when it is missing.
     def Test(self) -> tuple[bool, str]:
         connector, error_type = self.LoadConnector()
 
@@ -74,15 +97,22 @@ class Driver(Base):
                 (Settings.Name,),
             )
             exists = cursor.fetchone() is not None
-            cursor.close()
-            link.close()
 
             if not exists:
-                return False, (
-                    f"Server reachable but database '{Settings.Name}' does not exist. "
-                    f"Create it in MySQL first."
+                cursor.execute(
+                    f"CREATE DATABASE IF NOT EXISTS `{Settings.Name}` "
+                    "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                )
+                link.commit()
+                cursor.close()
+                link.close()
+                return True, (
+                    f"MySQL OK at {Settings.Host}:{Settings.Port}. "
+                    f"Created database '{Settings.Name}'."
                 )
 
+            cursor.close()
+            link.close()
             return True, (
                 f"MySQL OK at {Settings.Host}:{Settings.Port}/{Settings.Name}"
             )
@@ -92,3 +122,33 @@ class Driver(Base):
     # Returns whether a live MySQL connection is currently open.
     def IsActive(self) -> bool:
         return self.link is not None and self.link.is_connected()
+
+    def _CreateDatabase(self, connector, error_type) -> tuple[bool, str]:
+        try:
+            link = connector.connect(
+                host=Settings.Host,
+                port=Settings.Port,
+                user=Settings.User,
+                password=Settings.Password,
+            )
+            cursor = link.cursor()
+            cursor.execute(
+                f"CREATE DATABASE IF NOT EXISTS `{Settings.Name}` "
+                "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+            )
+            link.commit()
+            cursor.close()
+            link.close()
+            return True, f"Database '{Settings.Name}' is ready."
+        except error_type as error:
+            return False, f"Could not create database '{Settings.Name}'. Reason: {error}"
+
+    @staticmethod
+    def _IsMissingDatabase(error) -> bool:
+        code = getattr(error, "errno", None)
+
+        if code == 1049:
+            return True
+
+        message = str(error).lower()
+        return "unknown database" in message
