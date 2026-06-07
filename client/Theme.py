@@ -31,6 +31,7 @@ class Theme:
     Height = 680
     MinWidth = 860
     MinHeight = 560
+    MaxHeightRatio = 0.92
 
     Radius = 14
     RadiusSmall = 10
