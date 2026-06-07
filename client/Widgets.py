@@ -2,6 +2,8 @@ import customtkinter as ctk
 
 from Fonts import Fonts
 from Icons import Icons
+from i18n.Locale import Locale
+from Layout import Layout
 from Theme import Theme
 
 
@@ -20,17 +22,31 @@ class SectionTitle(ctk.CTkFrame):
         super().__init__(master, fg_color="transparent", **kwargs)
 
         image = Icons.Get(icon, icon_size)
-        if image is not None:
-            label = ctk.CTkLabel(self, text="", image=image)
-            label.image = image
-            label.pack(side="left", padx=(0, 10))
+        icon_label = None
 
-        ctk.CTkLabel(
+        if image is not None:
+            icon_label = ctk.CTkLabel(self, text="", image=image)
+            icon_label.image = image
+
+        title_label = ctk.CTkLabel(
             self,
             text=title,
             font=font or Fonts.Heading(),
             text_color=Theme.Text,
-        ).pack(side="left")
+            anchor=Layout.Anchor(),
+            justify=Layout.Justify(),
+        )
+
+        if Layout.IsRtl():
+            title_label.pack(side=Layout.PackStart())
+
+            if icon_label is not None:
+                icon_label.pack(side=Layout.PackStart(), padx=(10, 0))
+        else:
+            if icon_label is not None:
+                icon_label.pack(side=Layout.PackStart(), padx=(0, 10))
+
+            title_label.pack(side=Layout.PackStart())
 
 
 class FormField(ctk.CTkFrame):
@@ -41,12 +57,12 @@ class FormField(ctk.CTkFrame):
 
         self.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(
+        Layout.Label(
             self,
             text=label,
             font=Fonts.Caption(),
             text_color=Theme.TextMuted,
-        ).grid(row=0, column=0, sticky="w", pady=(0, 6))
+        ).grid(row=0, column=0, sticky=Layout.Sticky(), pady=(0, 6))
 
         self.input = ctk.CTkEntry(
             self,
@@ -56,6 +72,7 @@ class FormField(ctk.CTkFrame):
             border_color=Theme.Border,
             fg_color=Theme.SurfaceRaised,
             font=Fonts.Body(),
+            justify=Layout.Justify(),
         )
         self.input.grid(row=1, column=0, sticky="ew")
 
@@ -105,17 +122,18 @@ class MenuButton(ctk.CTkButton):
     ) -> None:
         style = self.Styles.get(variant, self.Styles["primary"])
         image = Icons.Get(icon, self.IconSize)
+        text = f"{label}  " if Layout.IsRtl() else f"  {label}"
 
         super().__init__(
             master,
-            text=f"  {label}",
+            text=text,
             command=command,
             height=self.Height,
             corner_radius=Theme.RadiusSmall,
             border_width=1,
-            anchor="w",
+            anchor=Layout.ButtonAnchor(),
             image=image,
-            compound="left",
+            compound=Layout.Compound(),
             font=Fonts.ButtonBold() if variant == "accent" else Fonts.Button(),
             **style,
             **kwargs,
@@ -147,9 +165,9 @@ class BackButton(ctk.CTkButton):
     def __init__(self, master, command, **kwargs) -> None:
         super().__init__(
             master,
-            text="←  Back",
+            text=Locale.t("common.back"),
             command=command,
-            width=96,
+            width=110 if Layout.IsRtl() else 96,
             height=34,
             corner_radius=8,
             fg_color=Theme.SurfaceRaised,
@@ -158,6 +176,7 @@ class BackButton(ctk.CTkButton):
             border_color=Theme.Border,
             text_color=Theme.TextMuted,
             font=Fonts.Caption(),
+            anchor=Layout.ButtonAnchor(),
             **kwargs,
         )
 
@@ -201,31 +220,41 @@ class RoleButton(ctk.CTkFrame):
 
         image = Icons.Get(icon, self.IconSize)
         icon_label = ctk.CTkLabel(row, text="", image=image, width=32)
+
         if image is not None:
             icon_label.image = image
-        icon_label.pack(side="left")
-        icon_label.bind("<Button-1>", self._OnClick)
 
         text = ctk.CTkFrame(row, fg_color="transparent")
-        text.pack(side="left", fill="x", expand=True, padx=(8, 0))
-        text.bind("<Button-1>", self._OnClick)
 
         prefix_label = ctk.CTkLabel(
             text,
             text=prefix,
             font=Fonts.Button(),
             text_color=Theme.TextMuted,
+            anchor=Layout.Anchor(),
         )
-        prefix_label.pack(side="left")
-        prefix_label.bind("<Button-1>", self._OnClick)
-
         highlight_label = ctk.CTkLabel(
             text,
             text=highlight,
             font=Fonts.ButtonBold(),
             text_color=Theme.Accent,
+            anchor=Layout.Anchor(),
         )
-        highlight_label.pack(side="left")
+
+        if Layout.IsRtl():
+            text.pack(side=Layout.PackStart(), fill="x", expand=True, padx=(0, 8))
+            icon_label.pack(side=Layout.PackStart())
+            prefix_label.pack(side=Layout.PackStart())
+            highlight_label.pack(side=Layout.PackStart())
+        else:
+            icon_label.pack(side=Layout.PackStart())
+            text.pack(side=Layout.PackStart(), fill="x", expand=True, padx=(8, 0))
+            prefix_label.pack(side=Layout.PackStart())
+            highlight_label.pack(side=Layout.PackStart())
+
+        icon_label.bind("<Button-1>", self._OnClick)
+        text.bind("<Button-1>", self._OnClick)
+        prefix_label.bind("<Button-1>", self._OnClick)
         highlight_label.bind("<Button-1>", self._OnClick)
 
         widgets = (self, row, icon_label, text, prefix_label, highlight_label)

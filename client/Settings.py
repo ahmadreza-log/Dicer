@@ -21,7 +21,7 @@ class Settings:
         host = host.strip()
 
         if not host:
-            return False, "IP address cannot be empty."
+            return False, "network.error.empty_host"
 
         return True, ""
 

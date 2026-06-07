@@ -1,6 +1,8 @@
 import customtkinter as ctk
 
 from Fonts import Fonts
+from i18n.Locale import Locale
+from Layout import Layout
 from Theme import Theme
 from Widgets import MenuButton
 
@@ -36,28 +38,27 @@ class Notice(ctk.CTkFrame):
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew")
 
-        ctk.CTkLabel(
+        Layout.Label(
             header,
             text=icon,
             font=Fonts.Make(42, "bold"),
             text_color=color,
-        ).pack(anchor="w")
+        ).pack(anchor=Layout.Anchor())
 
-        ctk.CTkLabel(
+        Layout.Label(
             header,
             text=self.title,
             font=Fonts.Heading(),
             text_color=Theme.Text,
-        ).pack(anchor="w", pady=(12, 0))
+        ).pack(anchor=Layout.Anchor(), pady=(12, 0))
 
-        ctk.CTkLabel(
+        Layout.Label(
             header,
             text=self.message,
             font=Fonts.Body(),
             text_color=Theme.TextMuted,
-            justify="left",
             wraplength=640,
-        ).pack(anchor="w", pady=(10, 0))
+        ).pack(anchor=Layout.Anchor(), pady=(10, 0))
 
         divider = ctk.CTkFrame(self, height=1, fg_color=Theme.BorderSoft)
         divider.grid(row=1, column=0, sticky="ew", pady=(24, 0))
@@ -70,7 +71,7 @@ class Notice(ctk.CTkFrame):
         MenuButton(
             actions,
             icon="play" if self.success else "door",
-            label="Back to Main Menu",
+            label=Locale.t("notice.back_menu"),
             command=self.OnBack,
             variant="accent" if self.success else "primary",
         ).grid(row=0, column=0, sticky="ew")

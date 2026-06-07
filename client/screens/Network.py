@@ -1,6 +1,8 @@
 import customtkinter as ctk
 
 from Fonts import Fonts
+from i18n.Locale import Locale
+from Layout import Layout
 from network.Probe import Probe
 from network.Session import Session
 from Settings import Settings
@@ -28,19 +30,18 @@ class Network(ctk.CTkFrame):
         header.grid(row=0, column=0, sticky="ew")
         header.grid_columnconfigure(1, weight=1)
 
-        BackButton(header, command=self.OnBack).grid(row=0, column=0, sticky="w")
-
+        back = BackButton(header, command=self.OnBack)
         titles = ctk.CTkFrame(header, fg_color="transparent")
-        titles.grid(row=0, column=1, sticky="w", padx=(16, 0))
+        Layout.PlaceScreenHeader(back, titles)
 
-        SectionTitle(titles, "house", "Network").grid(row=0, column=0, sticky="w")
+        SectionTitle(titles, "house", Locale.t("network.title")).grid(row=0, column=0, sticky=Layout.Sticky())
 
-        ctk.CTkLabel(
+        Layout.Label(
             titles,
-            text="Set the server IP address for all connections",
+            text=Locale.t("network.subtitle"),
             font=Fonts.Caption(),
             text_color=Theme.TextDim,
-        ).grid(row=1, column=0, sticky="w", pady=(6, 0))
+        ).grid(row=1, column=0, sticky=Layout.Sticky(), pady=(6, 0))
 
         divider = ctk.CTkFrame(self, height=1, fg_color=Theme.BorderSoft)
         divider.grid(row=1, column=0, sticky="ew", pady=(18, 0))
@@ -51,23 +52,24 @@ class Network(ctk.CTkFrame):
         form.grid(row=2, column=0, sticky="nsew", pady=(20, 0))
         form.grid_columnconfigure(0, weight=1)
 
-        self.host = FormField(form, "IP Address", "127.0.0.1")
+        self.host = FormField(form, Locale.t("network.ip"), Locale.t("network.ip.placeholder"))
         self.host.grid(row=0, column=0, sticky="ew", pady=(0, 10))
 
-        ctk.CTkLabel(
+        self.port_label = Layout.Label(
             form,
-            text=f"Port: {Settings.Port} (fixed)",
-            font=Fonts.Caption(),
-            text_color=Theme.TextDim,
-        ).grid(row=1, column=0, sticky="w", pady=(0, 8))
-
-        self.target = ctk.CTkLabel(
-            form,
-            text=f"Current target: {Settings.Endpoint()}",
+            text=Locale.t("network.port_fixed", port=Settings.Port),
             font=Fonts.Caption(),
             text_color=Theme.TextDim,
         )
-        self.target.grid(row=2, column=0, sticky="w", pady=(4, 18))
+        self.port_label.grid(row=1, column=0, sticky=Layout.Sticky(), pady=(0, 8))
+
+        self.target = Layout.Label(
+            form,
+            text=Locale.t("network.current_target", endpoint=Settings.Endpoint()),
+            font=Fonts.Caption(),
+            text_color=Theme.TextDim,
+        )
+        self.target.grid(row=2, column=0, sticky=Layout.Sticky(), pady=(4, 18))
 
         actions = ctk.CTkFrame(form, fg_color="transparent")
         actions.grid(row=3, column=0, sticky="ew")
@@ -76,7 +78,7 @@ class Network(ctk.CTkFrame):
         MenuButton(
             actions,
             icon="play",
-            label="Save",
+            label=Locale.t("common.save"),
             command=self.OnSave,
             variant="accent",
         ).grid(row=0, column=0, sticky="ew", pady=5)
@@ -84,7 +86,7 @@ class Network(ctk.CTkFrame):
         MenuButton(
             actions,
             icon="shield",
-            label="Test Connection",
+            label=Locale.t("network.test"),
             command=self.OnTest,
             variant="primary",
         ).grid(row=1, column=0, sticky="ew", pady=5)
@@ -93,7 +95,16 @@ class Network(ctk.CTkFrame):
 
     def LoadFields(self) -> None:
         self.host.Set(Settings.Host)
-        self.target.configure(text=f"Current target: {Settings.Endpoint()}")
+        self.port_label.configure(
+            text=Locale.t("network.port_fixed", port=Settings.Port),
+            anchor=Layout.Anchor(),
+            justify=Layout.Justify(),
+        )
+        self.target.configure(
+            text=Locale.t("network.current_target", endpoint=Settings.Endpoint()),
+            anchor=Layout.Anchor(),
+            justify=Layout.Justify(),
+        )
 
     def OnBack(self) -> None:
         self.navigator.ShowSettings()
@@ -103,7 +114,7 @@ class Network(ctk.CTkFrame):
         valid, error = Settings.ValidateHost(host)
 
         if not valid:
-            self.navigator.ShowNotice("Invalid Settings", error, success=False)
+            self.navigator.ShowNotice(Locale.t("network.invalid.title"), Locale.t(error), success=False)
             return
 
         Settings.ApplyHost(host)
@@ -112,12 +123,13 @@ class Network(ctk.CTkFrame):
         self.LoadFields()
 
         if not saved:
-            self.navigator.ShowNotice("Save Failed", message, success=False)
+            detail = Locale.t(message) if message == "store.saved" else message
+            self.navigator.ShowNotice(Locale.t("network.save_failed"), detail, success=False)
             return
 
         self.navigator.ShowNotice(
-            "Settings Saved",
-            f"Server IP set to {Settings.Host} (port {Settings.Port}).",
+            Locale.t("network.saved.title"),
+            Locale.t("network.saved.body", host=Settings.Host, port=Settings.Port),
             success=True,
         )
 
@@ -126,17 +138,17 @@ class Network(ctk.CTkFrame):
         valid, error = Settings.ValidateHost(host)
 
         if not valid:
-            self.navigator.ShowNotice("Invalid Settings", error, success=False)
+            self.navigator.ShowNotice(Locale.t("network.invalid.title"), Locale.t(error), success=False)
             return
 
         success, message = Probe.Test(host, Settings.Port)
 
         if success:
             self.navigator.ShowNotice(
-                "Connection OK",
-                f"Reached {Settings.Endpoint()}\n{message}",
+                Locale.t("network.test.ok.title"),
+                Locale.t("network.test.ok.body", endpoint=Settings.Endpoint(), message=message),
                 success=True,
             )
             return
 
-        self.navigator.ShowNotice("Connection Failed", message, success=False)
+        self.navigator.ShowNotice(Locale.t("network.test.failed"), message, success=False)
