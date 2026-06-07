@@ -92,11 +92,7 @@ class Register(ctk.CTkFrame):
         ).grid(row=4, column=0, sticky="ew")
 
     def OnBack(self) -> None:
-        if self.navigator.IsAuthenticated():
-            self.navigator.ShowAccount()
-            return
-
-        self.navigator.ShowAuth()
+        self.navigator.GoBack()
 
     def OnSubmit(self) -> None:
         username = self.username.Get()

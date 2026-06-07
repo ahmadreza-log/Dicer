@@ -85,7 +85,7 @@ class Language(ctk.CTkFrame):
         self.selector.set(current_label)
 
     def OnBack(self) -> None:
-        self.navigator.ShowSettings()
+        self.navigator.GoBack()
 
     def OnSave(self) -> None:
         code = self.labels.get(self.selector.get(), Locale.DefaultCode)

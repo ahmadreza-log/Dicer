@@ -68,7 +68,7 @@ class Start(ctk.CTkFrame):
             ).grid(row=row, column=0, sticky="ew", pady=6)
 
     def OnBack(self) -> None:
-        self.navigator.ShowMenu()
+        self.navigator.GoBack()
 
     def OnRole(self, role: str) -> None:
         if role in ("adventure", "watch"):
@@ -113,18 +113,35 @@ class Start(ctk.CTkFrame):
         self.StartDungeonMaster(campaign)
 
     def OnCampaignCreated(self, data: dict) -> None:
-        self.StartDungeonMaster(data)
+        self.StartDungeonMaster(data, save_first=True)
 
-    def RoomSettings(self, data: dict) -> dict:
-        return {
-            "name": data.get("name", ""),
-            "capacity": data.get("capacity", 6),
-            "private": bool(data.get("private", False)),
-            "password": data.get("password", ""),
-        }
+    def StartDungeonMaster(self, campaign: dict, save_first: bool = False) -> None:
+        campaign_id = campaign.get("id")
 
-    def StartDungeonMaster(self, campaign: dict) -> None:
-        success, message = Session.Register("dm", room=self.RoomSettings(campaign))
+        if save_first or campaign_id is None:
+            success, result = Session.SaveCampaign(
+                campaign.get("name", ""),
+                int(campaign.get("capacity", 6) or 6),
+                bool(campaign.get("private", False)),
+                campaign.get("password", ""),
+            )
+
+            if not success:
+                message = result if isinstance(result, str) else Locale.t("start.error.save")
+                self.navigator.ShowNotice(Locale.t("start.error.save"), message, success=False)
+                return
+
+            if not isinstance(result, dict) or not result.get("id"):
+                self.navigator.ShowNotice(
+                    Locale.t("start.error.save"),
+                    Locale.t("start.error.no_campaign_id"),
+                    success=False,
+                )
+                return
+
+            campaign_id = int(result["id"])
+
+        success, message = Session.Register("dm", campaign_id=campaign_id)
 
         if not success:
             self.navigator.ShowNotice(Locale.t("start.error.connection"), message, success=False)

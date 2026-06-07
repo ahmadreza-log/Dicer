@@ -86,11 +86,7 @@ class VerifyEmail(ctk.CTkFrame):
         ).grid(row=2, column=0, sticky="ew")
 
     def OnBack(self) -> None:
-        if self.navigator.IsAuthenticated():
-            self.navigator.ShowAccount()
-            return
-
-        self.navigator.ShowAuth()
+        self.navigator.GoBack()
 
     def OnVerify(self) -> None:
         code = self.code.Get()
@@ -122,7 +118,7 @@ class VerifyEmail(ctk.CTkFrame):
             Store.SaveUser(result)
 
         if self.navigator.IsAuthenticated():
-            self.navigator.ShowMenu()
+            self.navigator.ResetTo("menu")
             return
 
         self.navigator.ShowNotice(

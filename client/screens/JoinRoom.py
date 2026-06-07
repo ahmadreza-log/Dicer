@@ -122,7 +122,7 @@ class JoinRoom(ctk.CTkFrame):
         ).grid(row=0, column=0, sticky="ew", pady=(0, 8))
 
     def OnBack(self) -> None:
-        self.navigator.ShowStart()
+        self.navigator.GoBack()
 
     def OnPaste(self) -> None:
         try:

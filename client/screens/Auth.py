@@ -113,7 +113,7 @@ class Auth(ctk.CTkFrame):
         Store.SaveUser(result)
 
         if Store.Active:
-            self.navigator.ShowMenu()
+            self.navigator.ResetTo("menu")
             return
 
         self.navigator.ShowVerifyEmail()

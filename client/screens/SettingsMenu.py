@@ -65,7 +65,7 @@ class SettingsMenu(ctk.CTkFrame):
             ).grid(row=row, column=0, sticky="ew", pady=5)
 
     def OnBack(self) -> None:
-        self.navigator.ShowMenu()
+        self.navigator.GoBack()
 
     def OnNetwork(self) -> None:
         self.navigator.ShowNetwork()

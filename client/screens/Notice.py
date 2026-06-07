@@ -1,10 +1,9 @@
 import customtkinter as ctk
 
 from Fonts import Fonts
-from i18n.Locale import Locale
 from Layout import Layout
 from Theme import Theme
-from Widgets import MenuButton
+from Widgets import BackButton
 
 
 class Notice(ctk.CTkFrame):
@@ -68,17 +67,7 @@ class Notice(ctk.CTkFrame):
         actions.grid(row=2, column=0, sticky="ew", pady=(24, 0))
         actions.grid_columnconfigure(0, weight=1)
 
-        MenuButton(
-            actions,
-            icon="play" if self.success else "door",
-            label=Locale.t("notice.back_menu"),
-            command=self.OnBack,
-            variant="accent" if self.success else "primary",
-        ).grid(row=0, column=0, sticky="ew")
+        BackButton(actions, command=self.OnBack).grid(row=0, column=0, sticky="w")
 
     def OnBack(self) -> None:
-        if self.navigator.IsAuthenticated():
-            self.navigator.ShowMenu()
-            return
-
-        self.navigator.ShowInitialScreen()
+        self.navigator.ReturnFromNotice()

@@ -107,7 +107,7 @@ class Network(ctk.CTkFrame):
         )
 
     def OnBack(self) -> None:
-        self.navigator.ShowSettings()
+        self.navigator.GoBack()
 
     def OnSave(self) -> None:
         host = self.host.Get()
