@@ -23,6 +23,8 @@ class Registry:
         visibility: str | None = None,
         password: str | None = None,
         capacity: int | None = None,
+        campaign_name: str = "",
+        campaign_id: int | None = None,
     ) -> Room:
         resolved_visibility = visibility or Defaults.Visibility
         resolved_password = password if password is not None else Defaults.Password
@@ -37,6 +39,8 @@ class Registry:
                 visibility=resolved_visibility,
                 password=resolved_password,
                 capacity=resolved_capacity,
+                campaign_name=campaign_name,
+                campaign_id=campaign_id,
             )
             self.rooms[room_id] = room
 
@@ -48,6 +52,56 @@ class Registry:
             resolved_capacity,
         )
         return room
+
+    # Adds a client to an existing room after validation.
+    def Join(
+        self,
+        room_id: str,
+        peer: socket.socket,
+        role: str,
+        password: str = "",
+    ) -> tuple[bool, str, Room | None]:
+        with self.lock:
+            room = self.rooms.get(room_id)
+
+            if room is None:
+                return False, "Room not found.", None
+
+            if peer is room.host_peer:
+                return False, "Dungeon Master cannot join as a member.", None
+
+            if peer in room.members:
+                return False, "Already in this room.", None
+
+            if room.password and room.password != password:
+                return False, "Incorrect room password.", None
+
+            if role == "adventure" and room.PlayerCount() >= room.capacity:
+                return False, "Room is full.", None
+
+            room.members[peer] = role
+
+        self.logger.info(
+            "Client joined room | id=%s | role=%s | players=%d | members=%d",
+            room_id,
+            role,
+            room.PlayerCount(),
+            room.MemberCount(),
+        )
+        return True, "", room
+
+    # Removes a member from their room without deleting the session.
+    def Leave(self, peer: socket.socket) -> None:
+        with self.lock:
+            for room in self.rooms.values():
+                if peer in room.members:
+                    role = room.members.pop(peer)
+                    room_id = room.id
+                    break
+            else:
+                return
+
+        self.logger.info("Client left room | id=%s | role=%s", room_id, role)
 
     # Returns a room by id, or None when it does not exist.
     def Get(self, room_id: str) -> Room | None:
@@ -67,6 +121,9 @@ class Registry:
         with self.lock:
             for room in self.rooms.values():
                 if room.host_peer is peer:
+                    return room
+
+                if peer in room.members:
                     return room
 
         return None

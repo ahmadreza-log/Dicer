@@ -82,6 +82,9 @@ class Registry:
             if entry is None:
                 return False, "Connection not found."
 
+            if entry.registered:
+                return False, "Already registered."
+
             entry.role = role
             entry.registered = True
             address = entry.address
