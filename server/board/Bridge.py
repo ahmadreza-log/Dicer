@@ -41,6 +41,16 @@ class Bridge:
 
         return cls.manager.Clients()
 
+    # Returns registered users stored in MySQL for the dashboard.
+    @classmethod
+    def Users(cls) -> tuple[bool, str, list[dict]]:
+        if not Engine.IsActive():
+            return False, "Database is not connected.", []
+
+        from database.users.Repository import Repository as Users
+
+        return Users.List()
+
     # Records a client-count sample for the live chart.
     @classmethod
     def Record(cls) -> None:

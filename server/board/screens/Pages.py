@@ -98,6 +98,31 @@ class Clients:
         )
 
 
+class Users:
+    # Registered user accounts stored in MySQL.
+
+    @classmethod
+    def Build(cls):
+        return html.Div(
+            id="page-users",
+            className="page-panel",
+            style={"display": "none"},
+            children=[
+                Widgets.PageHeader(
+                    "Users",
+                    "Registered accounts with PBKDF2-hashed passwords and email verification.",
+                ),
+                Widgets.Panel(
+                    "👤 Registered Users",
+                    [
+                        html.Div(id="users-full-table"),
+                        html.P(id="users-count", className="text-muted small mt-3 mb-0"),
+                    ],
+                ),
+            ],
+        )
+
+
 class Settings:
     # Settings screens mirroring the CLI settings hub.
 
@@ -145,6 +170,12 @@ class Settings:
                 "Database",
                 "MySQL connection settings and actions.",
                 Forms.Database(),
+            ),
+            cls.Page(
+                "mail",
+                "Mail",
+                "SMTP settings for verification emails.",
+                Forms.Mail(),
             ),
             cls.Page(
                 "storage",

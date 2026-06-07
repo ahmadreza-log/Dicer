@@ -34,11 +34,16 @@ class App:
     def Bootstrap(cls, manager: Manager) -> None:
         Bridge.Attach(manager)
 
+        if Database.Enabled:
+            success, message = Engine.EnsureConnected()
+
+            if success:
+                Bridge.Log(f"Database connected. {message}", "success")
+            else:
+                Bridge.Notify(f"Database unavailable: {message}")
+
         if Network.AutoStart and not manager.IsActive():
             manager.Start()
-
-        if Database.Enabled:
-            Engine.Connect()
 
         atexit.register(Bridge.Cleanup)
 

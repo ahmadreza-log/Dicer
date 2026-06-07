@@ -7,6 +7,7 @@ from database.Engine import Engine
 from database.Settings import Settings as Database
 from logger.Logger import Logger
 from logger.Settings import Settings as Logging
+from mail.Settings import Settings as Mail
 from security.Settings import Settings as Security
 
 
@@ -325,6 +326,50 @@ class Service:
                     return False, f"{message} Server restart failed: {restart_message}"
 
         return True, f"{message} Saved to {Store.Filename}."
+
+    @classmethod
+    def ApplyMail(
+        cls,
+        test_mode: bool,
+        enabled: bool,
+        host: str,
+        port: str,
+        username: str,
+        password: str,
+        from_address: str,
+        from_name: str,
+        use_tls: bool,
+    ) -> tuple[bool, str]:
+        port_value = cls.ParseInt(port)
+
+        if port_value is None:
+            return False, "SMTP port must be a number."
+
+        if port_value < 1 or port_value > 65535:
+            return False, "SMTP port must be between 1 and 65535."
+
+        Mail.TestMode = test_mode
+
+        if enabled and not test_mode:
+            if not str(host).strip():
+                return False, "SMTP host cannot be empty."
+
+            if not str(from_address).strip():
+                return False, "From address cannot be empty."
+
+        Mail.Enabled = enabled
+        Mail.Host = host.strip()
+        Mail.Port = port_value
+        Mail.Username = username.strip()
+        Mail.Password = password or ""
+        Mail.FromAddress = from_address.strip()
+        Mail.FromName = from_name.strip() or "Dicer"
+        Mail.UseTls = use_tls
+
+        if test_mode:
+            return cls.Commit(True, "Mail settings saved. Test mode is active.")
+
+        return cls.Commit(True, "Mail settings saved.")
 
     @classmethod
     def ApplyPanel(

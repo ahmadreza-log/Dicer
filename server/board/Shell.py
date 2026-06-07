@@ -5,6 +5,7 @@ from board.Widgets import Widgets
 from board.screens.Pages import Clients
 from board.screens.Pages import Dashboard
 from board.screens.Pages import Settings
+from board.screens.Pages import Users
 from board.Settings import Settings as Panel
 
 
@@ -14,6 +15,7 @@ class Shell:
     NavMain = [
         ("dashboard", "bi-speedometer2", "Dashboard"),
         ("clients", "bi-people", "Clients"),
+        ("users", "bi-person-badge", "Users"),
     ]
 
     NavSettings = [
@@ -22,6 +24,7 @@ class Shell:
         ("connection", "bi-plug", "Connection"),
         ("security", "bi-shield-lock", "Security"),
         ("database", "bi-database", "Database"),
+        ("mail", "bi-envelope", "Mail"),
         ("storage", "bi-save", "Storage"),
         ("panel", "bi-sliders", "Panel"),
     ]
@@ -29,11 +32,13 @@ class Shell:
     Titles = {
         "dashboard": "Dashboard",
         "clients": "Clients",
+        "users": "Users",
         "network": "Network Settings",
         "logging": "Logging Settings",
         "connection": "Connection Settings",
         "security": "Security Settings",
         "database": "Database Settings",
+        "mail": "Mail Settings",
         "storage": "Save / Load / Reset",
         "panel": "Panel Settings",
     }
@@ -41,11 +46,13 @@ class Shell:
     Subtitles = {
         "dashboard": "Live server overview",
         "clients": "Active TCP connections",
+        "users": "Registered accounts stored in MySQL",
         "network": "Listen address, port, and limits",
         "logging": "Console and file output",
         "connection": "Welcome message and buffers",
         "security": "Password and IP filtering",
         "database": "MySQL connection settings",
+        "mail": "SMTP delivery for verification codes",
         "storage": "Persist settings to disk",
         "panel": "Web dashboard preferences",
     }
@@ -53,18 +60,20 @@ class Shell:
     Pages = [
         "dashboard",
         "clients",
+        "users",
         "network",
         "logging",
         "connection",
         "security",
         "database",
+        "mail",
         "storage",
         "panel",
     ]
 
     @classmethod
     def Build(cls):
-        pages = [Dashboard.Build(), Clients.Build(), *Settings.Build()]
+        pages = [Dashboard.Build(), Clients.Build(), Users.Build(), *Settings.Build()]
 
         return html.Div(
             [

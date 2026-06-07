@@ -6,6 +6,7 @@ from config.Settings import Settings as Network
 from connection.Settings import Settings as Connection
 from database.Settings import Settings as Database
 from logger.Settings import Settings as Logging
+from mail.Settings import Settings as Mail
 from security.Settings import Settings as Security
 
 
@@ -363,6 +364,101 @@ class Forms:
         )
 
     @classmethod
+    def Mail(cls):
+        return html.Div(
+            children=[
+                dbc.Alert(
+                    "In test mode, verification codes are written to the server console "
+                    "and logs/test-mail.log. Enable SMTP only for real delivery.",
+                    color="info",
+                    className="mb-3",
+                ),
+                dbc.Form(
+                    [
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    dbc.Checklist(
+                                        id="set-mail-test",
+                                        options=[
+                                            {
+                                                "label": " Test mode (log codes locally, no SMTP)",
+                                                "value": "yes",
+                                            }
+                                        ],
+                                        switch=True,
+                                    ),
+                                    md=12,
+                                    className="mb-2",
+                                ),
+                                dbc.Col(
+                                    dbc.Checklist(
+                                        id="set-mail-enabled",
+                                        options=[{"label": " Enable outbound email (SMTP)", "value": "yes"}],
+                                        switch=True,
+                                    ),
+                                    md=12,
+                                    className="mb-3",
+                                ),
+                            ],
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [dbc.Label("SMTP Host"), dbc.Input(id="set-mail-host")],
+                                    md=4,
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Label("Port"),
+                                        dbc.Input(id="set-mail-port", type="number", min=1, max=65535),
+                                    ],
+                                    md=2,
+                                ),
+                                dbc.Col(
+                                    [dbc.Label("Username"), dbc.Input(id="set-mail-user")],
+                                    md=3,
+                                ),
+                                dbc.Col(
+                                    [
+                                        dbc.Label("Password"),
+                                        dbc.Input(id="set-mail-pass", type="password"),
+                                    ],
+                                    md=3,
+                                ),
+                            ],
+                            className="g-3 mb-2",
+                        ),
+                        dbc.Row(
+                            [
+                                dbc.Col(
+                                    [dbc.Label("From Address"), dbc.Input(id="set-mail-from")],
+                                    md=4,
+                                ),
+                                dbc.Col(
+                                    [dbc.Label("From Name"), dbc.Input(id="set-mail-from-name")],
+                                    md=4,
+                                ),
+                                dbc.Col(
+                                    dbc.Checklist(
+                                        id="set-mail-tls",
+                                        options=[{"label": " Use TLS", "value": "yes"}],
+                                        switch=True,
+                                        className="mt-4",
+                                    ),
+                                    md=4,
+                                ),
+                            ],
+                            className="g-3",
+                        ),
+                    ],
+                ),
+                cls.Actions("mail"),
+                html.Div(id="set-mail-message", className="mt-3"),
+            ],
+        )
+
+    @classmethod
     def Storage(cls):
         return html.Div(
             children=[
@@ -484,6 +580,17 @@ class Forms:
                 "user": Database.User,
                 "pass": Database.Password,
                 "name": Database.Name,
+            },
+            "mail": {
+                "test_mode": ["yes"] if Mail.TestMode else [],
+                "enabled": ["yes"] if Mail.Enabled else [],
+                "host": Mail.Host,
+                "port": Mail.Port,
+                "user": Mail.Username,
+                "pass": Mail.Password,
+                "from_address": Mail.FromAddress,
+                "from_name": Mail.FromName,
+                "tls": ["yes"] if Mail.UseTls else [],
             },
             "panel": {
                 "host": Board.Host,

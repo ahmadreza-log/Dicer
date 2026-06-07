@@ -79,6 +79,8 @@ class Callbacks:
             Output("alert-banner", "children"),
             Output("clients-full-table", "children"),
             Output("clients-count", "children"),
+            Output("users-full-table", "children"),
+            Output("users-count", "children"),
             Output("settings-overview", "children"),
             Input("refresh", "n_intervals"),
         )
@@ -87,6 +89,7 @@ class Callbacks:
             status = Bridge.Status()
             database = Bridge.Database()
             clients = Bridge.Clients()
+            users_ok, users_reason, users = Bridge.Users()
 
             state = "Running" if status["active"] else "Stopped"
             host = f"{status['host']}:{status['port']}"
@@ -106,6 +109,12 @@ class Callbacks:
             alert = cls.BuildAlert(Bridge.alert)
             full_table = cls.BuildFullTable(clients)
             count_text = f"{len(clients)} active connection(s)"
+            users_table = cls.BuildUsersTable(users, users_ok, users_reason)
+            users_count = (
+                f"{len(users)} registered user(s)"
+                if users_ok
+                else users_reason
+            )
             overview = cls.BuildOverview()
 
             return (
@@ -123,6 +132,8 @@ class Callbacks:
                 alert,
                 full_table,
                 count_text,
+                users_table,
+                users_count,
                 overview,
             )
 
@@ -264,6 +275,35 @@ class Callbacks:
             values = Forms.Values()["panel"]
             return values["host"], values["port"], values["interval"], values["debug"]
 
+        @application.callback(
+            Output("set-mail-test", "value"),
+            Output("set-mail-enabled", "value"),
+            Output("set-mail-host", "value"),
+            Output("set-mail-port", "value"),
+            Output("set-mail-user", "value"),
+            Output("set-mail-pass", "value"),
+            Output("set-mail-from", "value"),
+            Output("set-mail-from-name", "value"),
+            Output("set-mail-tls", "value"),
+            Input("page", "data"),
+        )
+        def LoadMail(page):
+            if page != "mail":
+                raise PreventUpdate
+
+            values = Forms.Values()["mail"]
+            return (
+                values["test_mode"],
+                values["enabled"],
+                values["host"],
+                values["port"],
+                values["user"],
+                values["pass"],
+                values["from_address"],
+                values["from_name"],
+                values["tls"],
+            )
+
     @classmethod
     def RegisterSettings(cls, application) -> None:
         cls.RegisterPanelSync(application)
@@ -392,6 +432,47 @@ class Callbacks:
             else:
                 raise PreventUpdate
 
+            kind = "success" if success else "warning"
+            Bridge.Log(message, kind)
+            return cls.Message(message, success)
+
+        @application.callback(
+            Output("set-mail-message", "children"),
+            Input("btn-mail-apply", "n_clicks"),
+            State("set-mail-test", "value"),
+            State("set-mail-enabled", "value"),
+            State("set-mail-host", "value"),
+            State("set-mail-port", "value"),
+            State("set-mail-user", "value"),
+            State("set-mail-pass", "value"),
+            State("set-mail-from", "value"),
+            State("set-mail-from-name", "value"),
+            State("set-mail-tls", "value"),
+            prevent_initial_call=True,
+        )
+        def ApplyMail(
+            clicks,
+            test_mode,
+            enabled,
+            host,
+            port,
+            username,
+            password,
+            from_address,
+            from_name,
+            use_tls,
+        ):
+            success, message = Service.ApplyMail(
+                "yes" in (test_mode or []),
+                "yes" in (enabled or []),
+                host or "",
+                str(port or ""),
+                username or "",
+                password or "",
+                from_address or "",
+                from_name or "",
+                "yes" in (use_tls or []),
+            )
             kind = "success" if success else "warning"
             Bridge.Log(message, kind)
             return cls.Message(message, success)
@@ -554,6 +635,54 @@ class Callbacks:
                     html.Td(client["address"]),
                     html.Td(cls.BuildRoleBadge(client)),
                     html.Td(dbc.Badge("Active", color="success")),
+                ])
+            )
+
+        return dbc.Table(
+            [html.Thead(rows[0]), html.Tbody(rows[1:])],
+            bordered=True,
+            hover=True,
+            striped=True,
+            responsive=True,
+            className="mb-0",
+        )
+
+    @classmethod
+    def BuildUsersTable(cls, users: list[dict], ready: bool, reason: str):
+        if not ready:
+            return dbc.Alert(reason or "Users are unavailable.", color="warning", className="mb-0")
+
+        if not users:
+            return dbc.Alert("No registered users yet.", color="secondary", className="mb-0")
+
+        rows = [
+            html.Tr([
+                html.Th("ID"),
+                html.Th("Username"),
+                html.Th("Email"),
+                html.Th("Password"),
+                html.Th("Active"),
+                html.Th("Created"),
+            ])
+        ]
+
+        for user in users:
+            active = (
+                dbc.Badge("Yes", color="success")
+                if user.get("active")
+                else dbc.Badge("Pending", color="warning")
+            )
+            rows.append(
+                html.Tr([
+                    html.Td(str(user.get("id", ""))),
+                    html.Td(user.get("username", "")),
+                    html.Td(user.get("email", "")),
+                    html.Td([
+                        dbc.Badge("PBKDF2", color="dark", className="me-2"),
+                        html.Code(user.get("password_preview", "—"), className="small"),
+                    ]),
+                    html.Td(active),
+                    html.Td(user.get("created_at", "")),
                 ])
             )
 
