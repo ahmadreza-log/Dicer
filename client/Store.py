@@ -85,3 +85,11 @@ class Store:
         cls.Email = str(user.get("email", "")).strip()
         cls.Active = bool(user.get("active", user.get("email_verified", False)))
         return cls.Save()
+
+    @classmethod
+    def ClearUser(cls) -> tuple[bool, str]:
+        cls.UserId = 0
+        cls.Username = ""
+        cls.Email = ""
+        cls.Active = False
+        return cls.Save()

@@ -36,7 +36,10 @@ class Account(ctk.CTkFrame):
             ).pack(anchor=Layout.Anchor())
             self.register_button.grid_remove()
             self.verify_button.grid_remove()
+            self.logout_button.grid(row=1, column=0, sticky="ew", pady=5)
             return
+
+        self.logout_button.grid_remove()
 
         if Store.UserId:
             self.status_panel.grid()
@@ -108,11 +111,24 @@ class Account(ctk.CTkFrame):
         self.verify_button.grid(row=2, column=0, sticky="ew", pady=5)
         self.verify_button.grid_remove()
 
+        self.logout_button = MenuButton(
+            panel,
+            icon="door",
+            label=Locale.t("account.logout.button"),
+            command=self.OnLogout,
+            variant="danger",
+        )
+        self.logout_button.grid(row=3, column=0, sticky="ew", pady=5)
+        self.logout_button.grid_remove()
+
     def OnBack(self) -> None:
-        self.navigator.ShowSettings()
+        self.navigator.GoBack()
 
     def OnRegister(self) -> None:
         self.navigator.ShowRegister()
 
     def OnVerify(self) -> None:
         self.navigator.ShowVerifyEmail()
+
+    def OnLogout(self) -> None:
+        self.navigator.Logout()

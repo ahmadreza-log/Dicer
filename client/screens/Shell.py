@@ -3,6 +3,7 @@ import customtkinter as ctk
 from Fonts import Fonts
 from i18n.Locale import Locale
 from Layout import Layout
+from Store import Store
 from Theme import Theme
 from Widgets import SectionTitle
 
@@ -99,8 +100,13 @@ class Shell(ctk.CTkFrame):
             )
 
         if self.badge is not None:
+            if Store.UserId and Store.Username:
+                badge_text = Locale.t("shell.user_badge", username=Store.Username)
+            else:
+                badge_text = Locale.t("shell.client_badge")
+
             self.badge.configure(
-                text=Locale.t("shell.client_badge"),
+                text=badge_text,
                 anchor=Layout.Anchor(),
                 justify=Layout.Justify(),
             )
